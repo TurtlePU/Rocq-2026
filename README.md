@@ -274,9 +274,10 @@ Rocq работает на Windows, Linux, и macOS. Материалы этог
     для GUI-фреймворков и пр.
     Пользователям, которым нравится RocqIDE, стоит попробовать запустить его
     с выключенными режимами "asynchronous" и "error resilience":
-
-      coqide -async-proofs off \
-             -async-proofs-command-error-resilience off Foo.v &
+    ```
+    coqide -async-proofs off \
+           -async-proofs-command-error-resilience off Foo.v &
+    ```
 
   - Ваш покорный слуга предпочитает использовать __NeoVim__ с плагином
     __Coqtail__ для построчного режима либо __coq-lsp.nvim__ для LSP-режима.
