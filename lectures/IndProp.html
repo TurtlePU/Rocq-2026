@@ -1,0 +1,1153 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="common/css/sf.css" rel="stylesheet" type="text/css" />
+<title>IndProp: Индуктивные утверждения</title>
+<link href="common/jquery-ui/jquery-ui.css" rel="stylesheet">
+<script src="common/jquery-ui/external/jquery/jquery.js"></script>
+<script src="common/jquery-ui/jquery-ui.js"></script>
+<script src="common/toggleproofs.js"></script>
+<link href="common/css/lf.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="common/slides.js"></script>
+<link href="common/css/slides.css" rel="stylesheet" type="text/css"/>
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+<div id='logoinheader'><a href='https://softwarefoundations.cis.upenn.edu'>
+<img src='common/media/image/sf_logo_sm.png' alt='Software Foundations Logo'></a></div>
+<div class='booktitleinheader'><a href='index.html'>Volume 1: Logical Foundations</a></div>
+<ul id='menu'>
+   <li class='section_name'><a href='toc.html'>Table of Contents</a></li>
+   <li class='section_name'><a href='coqindex.html'>Index</a></li>
+   <li class='section_name'><a href='deps.html'>Roadmap</a></li>
+</ul>
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">IndProp<span class="subtitle">Индуктивные утверждения</span></h1>
+
+
+
+<div class="doc">
+<a id="lab256"></a><h1 class="section">Индуктивные утверждения</h1>
+
+<div class="paragraph"> </div>
+
+ В главе <a href="Logic.html"><span class="inlineref">Logic</span></a> мы увидели несколько новых связок для построения
+    утверждений, включая конъюнкцию, дизъюнкцию и квантор существования.
+
+<div class="paragraph"> </div>
+
+    Здесь мы изучим ещё один инструмент: _индуктивные утверждения_.
+
+<div class="paragraph"> </div>
+
+    Пару примеров для разминки... 
+</div>
+
+<div class="doc">
+<a id="lab257"></a><h2 class="section">Пример: Гипотеза Коллатца</h2>
+
+<div class="paragraph"> </div>
+
+ _Гипотеза Коллатца_ -- знаменитая нерешённая проблема теории чисел.
+
+<div class="paragraph"> </div>
+
+    У неё достаточно простая формулировка.  Во-первых, определим функцию шага
+    Коллатца на числах: 
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Fixpoint</span> <span class="id" title="var">div2</span> (<span class="id" title="var">n</span> : <span class="id" title="var">nat</span>) : <span class="id" title="var">nat</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="var">n</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;0 ⇒ 0<br/>
+&nbsp;&nbsp;| 1 ⇒ 0<br/>
+&nbsp;&nbsp;| <span class="id" title="var">S</span> (<span class="id" title="var">S</span> <span class="id" title="var">n</span>) ⇒ <span class="id" title="var">S</span> (<span class="id" title="var">div2</span> <span class="id" title="var">n</span>)<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/><hr class='doublespaceincode'/>
+<span class="id" title="keyword">Definition</span> <span class="id" title="var">csf</span> (<span class="id" title="var">n</span> : <span class="id" title="var">nat</span>) : <span class="id" title="var">nat</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">if</span> <span class="id" title="var">even</span> <span class="id" title="var">n</span> <span class="id" title="keyword">then</span> <span class="id" title="var">div2</span> <span class="id" title="var">n</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">else</span> (3 × <span class="id" title="var">n</span>) + 1.<br/>
+</div>
+
+<div class="doc">
+<a id="lab258"></a><h3 class="section"> </h3>
+
+<div class="paragraph"> </div>
+
+ Давайте теперь посмотрим, что получится, если снова и снова применять <span class="inlinecode"><span class="id" title="var">csf</span></span>
+    к некоторому начальному значению.  Например, <span class="inlinecode"><span class="id" title="var">csf</span></span> <span class="inlinecode">12</span> равно <span class="inlinecode">6</span>; <span class="inlinecode"><span class="id" title="var">csf</span></span> <span class="inlinecode">6</span> --
+    трём и, продолжая таким образом, мы получаем последовательность
+    <span class="inlinecode">12,</span> <span class="inlinecode">6,</span> <span class="inlinecode">3,</span> <span class="inlinecode">10,</span> <span class="inlinecode">5,</span> <span class="inlinecode">16,</span> <span class="inlinecode">8,</span> <span class="inlinecode">4,</span> <span class="inlinecode">2,</span> <span class="inlinecode">1</span>.
+
+<div class="paragraph"> </div>
+
+    Если же мы начнём с <span class="inlinecode">19</span>, то последовательность получится длиннее:
+    <span class="inlinecode">19,</span> <span class="inlinecode">58,</span> <span class="inlinecode">29,</span> <span class="inlinecode">88,</span> <span class="inlinecode">44,</span> <span class="inlinecode">22,</span> <span class="inlinecode">11,</span> <span class="inlinecode">34,</span> <span class="inlinecode">17,</span> <span class="inlinecode">52,</span> <span class="inlinecode">26,</span> <span class="inlinecode">13,</span> <span class="inlinecode">40,</span> <span class="inlinecode">20,</span> <span class="inlinecode">10,</span> <span class="inlinecode">5,</span> <span class="inlinecode">16,</span> <span class="inlinecode">8,</span> <span class="inlinecode">4,</span> <span class="inlinecode">2,</span> <span class="inlinecode">1</span>.
+
+<div class="paragraph"> </div>
+
+    Обе эти последовательности рано или поздно достигают <span class="inlinecode">1</span>.  Вопрос,
+    поставленный Коллатцем, следующий: _Любая_ ли последовательность,
+    начинающаяся с положительного натурального числа, достигает <span class="inlinecode">1</span>? 
+<div class="paragraph"> </div>
+
+<a id="lab259"></a><h3 class="section"> </h3>
+
+<div class="paragraph"> </div>
+
+ Чтобы формализовать этот вопрос в Rocq, мы могли бы попытаться определить
+    рекурсивную _функцию_, вычисляющую число шагов, которое требуется некоторой
+    последовательности, чтобы достигнуть <span class="inlinecode">1</span>. 
+</div>
+<div class="code">
+
+<span class="id" title="var">Fail</span> <span class="id" title="keyword">Fixpoint</span> <span class="id" title="var">reaches1_in</span> (<span class="id" title="var">n</span> : <span class="id" title="var">nat</span>) : <span class="id" title="var">nat</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">if</span> <span class="id" title="var">n</span> =? 1 <span class="id" title="keyword">then</span> 0<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">else</span> 1 + <span class="id" title="var">reaches1_in</span> (<span class="id" title="var">csf</span> <span class="id" title="var">n</span>).<br/>
+</div>
+
+<div class="doc">
+В обычном языке программирования такое определение сработает. Однако
+    проверка завершимости Rocq-а такое определение отвергнет, поскольку аргумент
+    рекурсивного вызова, равный <span class="inlinecode"><span class="id" title="var">csf</span></span> <span class="inlinecode"><span class="id" title="var">n</span></span>, не "очевидно меньше" чем <span class="inlinecode"><span class="id" title="var">n</span></span>.
+
+<div class="paragraph"> </div>
+
+    Напомним, это ограничение не случайно: функции в Rocq должны завершаться на
+    всех входах, чтобы система была логически непротиворечива.
+
+<div class="paragraph"> </div>
+
+    Казалось бы, может, сделать проверку завершимости умнее? Но решение того,
+    тотальна ли <span class="inlinecode"><span class="id" title="var">reaches1_in</span></span>, было бы эквивалентно решению гипотезы Коллатца!
+
+<div class="paragraph"> </div>
+
+<a id="lab260"></a><h3 class="section"> </h3>
+
+<div class="paragraph"> </div>
+
+ С другой стороны, можно попробовать выразить понятие "достигает <span class="inlinecode">1</span>
+    в последовательности Коллатца" как _рекурсивно_ определённое свойство чисел.
+
+</div>
+<div class="code">
+
+<span class="id" title="var">Fail</span> <span class="id" title="keyword">Fixpoint</span> <span class="id" title="var">Collatz_holds_for</span> (<span class="id" title="var">n</span> : <span class="id" title="var">nat</span>) : <span class="id" title="keyword">Prop</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="var">n</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| 0 ⇒ <span class="id" title="var">False</span><br/>
+&nbsp;&nbsp;| 1 ⇒ <span class="id" title="var">True</span><br/>
+&nbsp;&nbsp;| <span class="id" title="var">_</span> ⇒ <span class="id" title="keyword">if</span> <span class="id" title="var">even</span> <span class="id" title="var">n</span> <span class="id" title="keyword">then</span> <span class="id" title="var">Collatz_holds_for</span> (<span class="id" title="var">div2</span> <span class="id" title="var">n</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">else</span> <span class="id" title="var">Collatz_holds_for</span> ((3 × <span class="id" title="var">n</span>) + 1)<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+</div>
+
+<div class="doc">
+Но такое определение также не проходит проверку завершимости: хоть
+    теоретически мы и могли бы убедить Rocq, что <span class="inlinecode"><span class="id" title="var">div2</span></span> <span class="inlinecode"><span class="id" title="var">n</span></span> меньше <span class="inlinecode"><span class="id" title="var">n</span></span>, мы
+    совершенно точно не сможем сказать, что <span class="inlinecode">(3</span> <span class="inlinecode">×</span> <span class="inlinecode"><span class="id" title="var">n</span>)</span> <span class="inlinecode">+</span> <span class="inlinecode">1</span> меньше <span class="inlinecode"><span class="id" title="var">n</span></span>! 
+<div class="paragraph"> </div>
+
+<a id="lab261"></a><h3 class="section"> </h3>
+
+<div class="paragraph"> </div>
+
+ К счастью, есть другой способ это сделать: мы можем выразить понятие
+    "достигает <span class="inlinecode">1</span> в последовательности Коллатца" как _индуктивно_ определённое
+    свойство. В математике этот способ называется
+    "задание с помощью правил вывода":
+
+<div class="paragraph"> </div>
+
+<center><table class="infrule">
+<tr class="infruleassumption">
+  <td class="infrule">&nbsp;&nbsp;</td>
+  <td class="infrulenamecol" rowspan="3">
+    (Chf_one) &nbsp;
+  </td></tr>
+<tr class="infrulemiddle">
+  <td class="infrule"><hr /></td>
+</tr>
+<tr class="infruleassumption">
+  <td class="infrule">Collatz_holds_for 1</td>
+  <td></td>
+</tr>
+</table></center><center><table class="infrule">
+<tr class="infruleassumption">
+  <td class="infrule">even n = true&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Collatz_holds_for (div2 n)</td>
+  <td class="infrulenamecol" rowspan="3">
+    (Chf_even) &nbsp;
+  </td></tr>
+<tr class="infrulemiddle">
+  <td class="infrule"><hr /></td>
+</tr>
+<tr class="infruleassumption">
+  <td class="infrule">Collatz_holds_for n</td>
+  <td></td>
+</tr>
+</table></center><center><table class="infrule">
+<tr class="infruleassumption">
+  <td class="infrule">even n = false&nbsp;&nbsp;&nbsp;&nbsp;Collatz_holds_for ((3 * n) + 1)</td>
+  <td class="infrulenamecol" rowspan="3">
+    (Chf_odd) &nbsp;
+  </td></tr>
+<tr class="infrulemiddle">
+  <td class="infrule"><hr /></td>
+</tr>
+<tr class="infruleassumption">
+  <td class="infrule">Collatz_holds_for n</td>
+  <td></td>
+</tr>
+</table></center>
+<div class="paragraph"> </div>
+
+    Другими словами, у нас есть три способа доказать, что <span class="inlinecode"><span class="id" title="var">n</span></span> в конечном итоге
+    достигает 1 в последовательности Коллатца:
+<ul class="doclist">
+<li> <span class="inlinecode"><span class="id" title="var">n</span></span> уже равен 1;
+
+</li>
+<li> <span class="inlinecode"><span class="id" title="var">n</span></span> чётно, а <span class="inlinecode"><span class="id" title="var">div2</span></span> <span class="inlinecode"><span class="id" title="var">n</span></span> в конечном итоге достигает 1;
+
+</li>
+<li> <span class="inlinecode"><span class="id" title="var">n</span></span> нечётно, а <span class="inlinecode">(3</span> <span class="inlinecode">×</span> <span class="inlinecode"><span class="id" title="var">n</span>)</span> <span class="inlinecode">+</span> <span class="inlinecode">1</span> в конечном итоге достигает 1.
+
+</li>
+</ul>
+<a id="lab262"></a><h3 class="section"> </h3>
+ Мы можем доказать, что число достигает 1, построив (конечное) дерево вывода
+    с использованием этих правил. Например, вот вывод того факта, что 12
+    достигает 1 (где мы опустили утверждения о чётности/нечётности):
+<br/>
+<span class="inlinecode"><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;———————————————————— (<span class="id" title="var">Chf_one</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Collatz_holds_for</span> 1<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;———————————————————— (<span class="id" title="var">Chf_even</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Collatz_holds_for</span> 2<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;———————————————————— (<span class="id" title="var">Chf_even</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Collatz_holds_for</span> 4<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;———————————————————— (<span class="id" title="var">Chf_even</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Collatz_holds_for</span> 8<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;———————————————————— (<span class="id" title="var">Chf_even</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Collatz_holds_for</span> 16<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;———————————————————— (<span class="id" title="var">Chf_odd</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Collatz_holds_for</span> 5<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;———————————————————— (<span class="id" title="var">Chf_even</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Collatz_holds_for</span> 10<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;———————————————————— (<span class="id" title="var">Chf_odd</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Collatz_holds_for</span> 3<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;———————————————————— (<span class="id" title="var">Chf_even</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Collatz_holds_for</span> 6<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;———————————————————— (<span class="id" title="var">Chf_even</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Collatz_holds_for</span> 12
+</span><a id="lab263"></a><h3 class="section"> </h3>
+
+<div class="paragraph"> </div>
+
+ В Rocq этому соответствует _индуктивное определения свойства_: 
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Inductive</span> <span class="id" title="var">Collatz_holds_for</span> : <span class="id" title="var">nat</span> → <span class="id" title="keyword">Prop</span> :=<br/>
+&nbsp;&nbsp;| <span class="id" title="var">Chf_one</span> : <span class="id" title="var">Collatz_holds_for</span> 1<br/>
+&nbsp;&nbsp;| <span class="id" title="var">Chf_even</span> (<span class="id" title="var">n</span> : <span class="id" title="var">nat</span>) : <span class="id" title="var">even</span> <span class="id" title="var">n</span> = <span class="id" title="var">true</span> →<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Collatz_holds_for</span> (<span class="id" title="var">div2</span> <span class="id" title="var">n</span>) →<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Collatz_holds_for</span> <span class="id" title="var">n</span><br/>
+&nbsp;&nbsp;| <span class="id" title="var">Chf_odd</span> (<span class="id" title="var">n</span> : <span class="id" title="var">nat</span>) :  <span class="id" title="var">even</span> <span class="id" title="var">n</span> = <span class="id" title="var">false</span> →<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Collatz_holds_for</span> ((3 × <span class="id" title="var">n</span>) + 1) →<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Collatz_holds_for</span> <span class="id" title="var">n</span>.<br/>
+</div>
+
+<div class="doc">
+<a id="lab264"></a><h3 class="section"> </h3>
+
+<div class="paragraph"> </div>
+
+ Теперь мы можем доказывать, что последовательность Коллатца, начинающаяся в
+    некотором конкретном <span class="inlinecode"><span class="id" title="var">n</span></span>, достигает 1: 
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Example</span> <span class="id" title="var">Collatz_holds_for_12</span> : <span class="id" title="var">Collatz_holds_for</span> 12.<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">apply</span> <span class="id" title="var">Chf_even</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="tactic">simpl</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">apply</span> <span class="id" title="var">Chf_even</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="tactic">simpl</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">apply</span> <span class="id" title="var">Chf_odd</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="tactic">simpl</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">apply</span> <span class="id" title="var">Chf_even</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="tactic">simpl</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">apply</span> <span class="id" title="var">Chf_odd</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="tactic">simpl</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">apply</span> <span class="id" title="var">Chf_even</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="tactic">simpl</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">apply</span> <span class="id" title="var">Chf_even</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="tactic">simpl</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">apply</span> <span class="id" title="var">Chf_even</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="tactic">simpl</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">apply</span> <span class="id" title="var">Chf_even</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="tactic">simpl</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">apply</span> <span class="id" title="var">Chf_one</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+</div>
+
+<div class="doc">
+<a id="lab265"></a><h3 class="section"> </h3>
+
+<div class="paragraph"> </div>
+
+ Гипотеза Коллатца же, в свою очередь, утверждает, что _любая_
+    последовательность Коллатца достигает <span class="inlinecode">1</span>: 
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Conjecture</span> <span class="id" title="var">collatz</span> : <span class="id" title="keyword">∀</span> <span class="id" title="var">n</span>, <span class="id" title="var">n</span> ≠ 0 → <span class="id" title="var">Collatz_holds_for</span> <span class="id" title="var">n</span>.<br/>
+</div>
+
+<div class="doc">
+Если у Вас получится доказать эту гипотезу, у Вас светлое будущее на поприще
+    теории чисел!  Но не тратьте на неё слишком много времени -- эта гипотеза
+    открыта с 1937. 
+</div>
+
+<div class="doc">
+<a id="lab266"></a><h2 class="section">Пример: Сравнение чисел</h2>
+
+<div class="paragraph"> </div>
+
+ Бинарное _отношение_ на множестве <span class="inlinecode"><span class="id" title="var">X</span></span> в Rocq можно представить как функцию
+    <span class="inlinecode"><span class="id" title="var">X</span></span> <span class="inlinecode">→</span> <span class="inlinecode"><span class="id" title="var">X</span></span> <span class="inlinecode">→</span> <span class="inlinecode"><span class="id" title="keyword">Prop</span></span>. Другими словами, отношение -- это семейство утверждений,
+    параметризованное парой значений типа <span class="inlinecode"><span class="id" title="var">X</span></span>, т.е. утверждение о парах <span class="inlinecode"><span class="id" title="var">X</span></span>. 
+<div class="paragraph"> </div>
+
+ Например, уже знакомое Вам отношение меньше-либо-равно на <span class="inlinecode"><span class="id" title="var">nat</span></span> имеет тип
+    <span class="inlinecode"><span class="id" title="var">nat</span></span> <span class="inlinecode">→</span> <span class="inlinecode"><span class="id" title="var">nat</span></span> <span class="inlinecode">→</span> <span class="inlinecode"><span class="id" title="keyword">Prop</span></span>, и его можно определить индуктивно следующим образом:
+
+<div class="paragraph"> </div>
+
+
+<div class="paragraph"> </div>
+
+<center><table class="infrule">
+<tr class="infruleassumption">
+  <td class="infrule">&nbsp;&nbsp;</td>
+  <td class="infrulenamecol" rowspan="3">
+    (le_n) &nbsp;
+  </td></tr>
+<tr class="infrulemiddle">
+  <td class="infrule"><hr /></td>
+</tr>
+<tr class="infruleassumption">
+  <td class="infrule">le n n</td>
+  <td></td>
+</tr>
+</table></center><center><table class="infrule">
+<tr class="infruleassumption">
+  <td class="infrule">le n m</td>
+  <td class="infrulenamecol" rowspan="3">
+    (le_S) &nbsp;
+  </td></tr>
+<tr class="infrulemiddle">
+  <td class="infrule"><hr /></td>
+</tr>
+<tr class="infruleassumption">
+  <td class="infrule">le n (S m)</td>
+  <td></td>
+</tr>
+</table></center>
+<div class="paragraph"> </div>
+
+ Эти рассуждения соответствуют следующему определению в Rocq: 
+</div>
+<div class="code">
+<hr class='doublespaceincode'/>
+<span class="id" title="keyword">Inductive</span> <span class="id" title="var">le</span> : <span class="id" title="var">nat</span> → <span class="id" title="var">nat</span> → <span class="id" title="keyword">Prop</span> :=<br/>
+&nbsp;&nbsp;| <span class="id" title="var">le_n</span> (<span class="id" title="var">n</span> : <span class="id" title="var">nat</span>)   : <span class="id" title="var">le</span> <span class="id" title="var">n</span> <span class="id" title="var">n</span><br/>
+&nbsp;&nbsp;| <span class="id" title="var">le_S</span> (<span class="id" title="var">n</span> <span class="id" title="var">m</span> : <span class="id" title="var">nat</span>) : <span class="id" title="var">le</span> <span class="id" title="var">n</span> <span class="id" title="var">m</span> → <span class="id" title="var">le</span> <span class="id" title="var">n</span> (<span class="id" title="var">S</span> <span class="id" title="var">m</span>).<br/><hr class='doublespaceincode'/>
+<span class="id" title="keyword">Notation</span> &quot;n &lt;= m" := (<span class="id" title="var">le</span> <span class="id" title="var">n</span> <span class="id" title="var">m</span>) (<span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 70).<br/><hr class='doublespaceincode'/>
+</div>
+
+<div class="doc">
+<a id="lab267"></a><h2 class="section">Пример: Транзитивное замыкание</h2>
+
+<div class="paragraph"> </div>
+
+ Другой пример: _транзитивное замыкание_ отношения <span class="inlinecode"><span class="id" title="var">R</span></span> -- это наименьшее
+    отношение, содержащее <span class="inlinecode"><span class="id" title="var">R</span></span>, являющееся транзитивным. Его можно задать
+    следующими правилами:
+<center><table class="infrule">
+<tr class="infruleassumption">
+  <td class="infrule">R x y</td>
+  <td class="infrulenamecol" rowspan="3">
+    (t_step) &nbsp;
+  </td></tr>
+<tr class="infrulemiddle">
+  <td class="infrule"><hr /></td>
+</tr>
+<tr class="infruleassumption">
+  <td class="infrule">clos_trans R x y</td>
+  <td></td>
+</tr>
+</table></center><center><table class="infrule">
+<tr class="infruleassumption">
+  <td class="infrule">clos_trans R x y&nbsp;&nbsp;&nbsp;&nbsp;clos_trans R y z</td>
+  <td class="infrulenamecol" rowspan="3">
+    (t_trans) &nbsp;
+  </td></tr>
+<tr class="infrulemiddle">
+  <td class="infrule"><hr /></td>
+</tr>
+<tr class="infruleassumption">
+  <td class="infrule">clos_trans R x z</td>
+  <td></td>
+</tr>
+</table></center>
+<div class="paragraph"> </div>
+
+    В Rocq это выглядит вот так:
+
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Inductive</span> <span class="id" title="var">clos_trans</span> {<span class="id" title="var">X</span>: <span class="id" title="keyword">Type</span>} (<span class="id" title="var">R</span>: <span class="id" title="var">X</span>→<span class="id" title="var">X</span>→<span class="id" title="keyword">Prop</span>) : <span class="id" title="var">X</span>→<span class="id" title="var">X</span>→<span class="id" title="keyword">Prop</span> :=<br/>
+&nbsp;&nbsp;| <span class="id" title="var">t_step</span> (<span class="id" title="var">x</span> <span class="id" title="var">y</span> : <span class="id" title="var">X</span>) :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">R</span> <span class="id" title="var">x</span> <span class="id" title="var">y</span> →<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">clos_trans</span> <span class="id" title="var">R</span> <span class="id" title="var">x</span> <span class="id" title="var">y</span><br/>
+&nbsp;&nbsp;| <span class="id" title="var">t_trans</span> (<span class="id" title="var">x</span> <span class="id" title="var">y</span> <span class="id" title="var">z</span> : <span class="id" title="var">X</span>) :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">clos_trans</span> <span class="id" title="var">R</span> <span class="id" title="var">x</span> <span class="id" title="var">y</span> →<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">clos_trans</span> <span class="id" title="var">R</span> <span class="id" title="var">y</span> <span class="id" title="var">z</span> →<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">clos_trans</span> <span class="id" title="var">R</span> <span class="id" title="var">x</span> <span class="id" title="var">z</span>.<br/>
+</div>
+
+<div class="doc">
+<a id="lab268"></a><h3 class="section"> </h3>
+
+<div class="paragraph"> </div>
+
+ Так, пусть у нас определено отношение "является родителем"... 
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Inductive</span> <span class="id" title="var">Person</span> : <span class="id" title="keyword">Type</span> := <span class="id" title="var">Sage</span> | <span class="id" title="var">Cleo</span> | <span class="id" title="var">Ridley</span> | <span class="id" title="var">Moss</span>.<br/><hr class='doublespaceincode'/>
+<span class="id" title="keyword">Inductive</span> <span class="id" title="var">parent_of</span> : <span class="id" title="var">Person</span> → <span class="id" title="var">Person</span> → <span class="id" title="keyword">Prop</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="var">po_SC</span> : <span class="id" title="var">parent_of</span> <span class="id" title="var">Sage</span> <span class="id" title="var">Cleo</span><br/>
+| <span class="id" title="var">po_SR</span> : <span class="id" title="var">parent_of</span> <span class="id" title="var">Sage</span> <span class="id" title="var">Ridley</span><br/>
+| <span class="id" title="var">po_CM</span> : <span class="id" title="var">parent_of</span> <span class="id" title="var">Cleo</span> <span class="id" title="var">Moss</span>.<br/>
+</div>
+
+<div class="doc">
+Отношение <span class="inlinecode"><span class="id" title="var">parent_of</span></span> не транзитивно, но мы можем определить отношение
+    "быть предком для" как транзитивное замыкание этого отношения: 
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Definition</span> <span class="id" title="var">ancestor_of</span> : <span class="id" title="var">Person</span> → <span class="id" title="var">Person</span> → <span class="id" title="keyword">Prop</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="var">clos_trans</span> <span class="id" title="var">parent_of</span>.<br/>
+</div>
+
+<div class="doc">
+Вот дерево вывода, демонстрирующее, что Sage -- предок Moss:
+<br/>
+<span class="inlinecode"><br/>
+&nbsp;———————————————————(<span class="id" title="var">po_SC</span>)     ———————————————————(<span class="id" title="var">po_CM</span>)<br/>
+&nbsp;<span class="id" title="var">parent_of</span> <span class="id" title="var">Sage</span> <span class="id" title="var">Cleo</span>            <span class="id" title="var">parent_of</span> <span class="id" title="var">Cleo</span> <span class="id" title="var">Moss</span><br/>
+—————————————————————(<span class="id" title="var">t_step</span>)  —————————————————————(<span class="id" title="var">t_step</span>)<br/>
+<span class="id" title="var">ancestor_of</span> <span class="id" title="var">Sage</span> <span class="id" title="var">Cleo</span>          <span class="id" title="var">ancestor_of</span> <span class="id" title="var">Cleo</span> <span class="id" title="var">Moss</span><br/>
+————————————————————————————————————————————————————(<span class="id" title="var">t_trans</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">ancestor_of</span> <span class="id" title="var">Sage</span> <span class="id" title="var">Moss</span>
+</span>
+</div>
+
+<div class="doc">
+<a id="lab269"></a><h2 class="section">Пример: Рефлексивно-транзитивное замыкание</h2>
+
+<div class="paragraph"> </div>
+
+ Вот ещё один пример: _рефлексивно-транзитивное замыкание_ отношения <span class="inlinecode"><span class="id" title="var">R</span></span> --
+    наименьшее отношение, содержащее <span class="inlinecode"><span class="id" title="var">R</span></span>, которое и рефлексивно, и транзитивно.
+    Его можно построить с помощью следующих трёх правил (в отличие от
+    <span class="inlinecode"><span class="id" title="var">clos_trans</span></span>, мы добавили правило, постулирующее рефлексивность):
+<center><table class="infrule">
+<tr class="infruleassumption">
+  <td class="infrule">R x y</td>
+  <td class="infrulenamecol" rowspan="3">
+    (rt_step) &nbsp;
+  </td></tr>
+<tr class="infrulemiddle">
+  <td class="infrule"><hr /></td>
+</tr>
+<tr class="infruleassumption">
+  <td class="infrule">clos_refl_trans R x y</td>
+  <td></td>
+</tr>
+</table></center><center><table class="infrule">
+<tr class="infruleassumption">
+  <td class="infrule">&nbsp;&nbsp;</td>
+  <td class="infrulenamecol" rowspan="3">
+    (rt_refl) &nbsp;
+  </td></tr>
+<tr class="infrulemiddle">
+  <td class="infrule"><hr /></td>
+</tr>
+<tr class="infruleassumption">
+  <td class="infrule">clos_refl_trans R x x</td>
+  <td></td>
+</tr>
+</table></center><center><table class="infrule">
+<tr class="infruleassumption">
+  <td class="infrule">clos_refl_trans R x y&nbsp;&nbsp;&nbsp;&nbsp;clos_refl_trans R y z</td>
+  <td class="infrulenamecol" rowspan="3">
+    (rt_trans) &nbsp;
+  </td></tr>
+<tr class="infrulemiddle">
+  <td class="infrule"><hr /></td>
+</tr>
+<tr class="infruleassumption">
+  <td class="infrule">clos_refl_trans R x z</td>
+  <td></td>
+</tr>
+</table></center>
+</div>
+
+<div class="doc">
+<a id="lab270"></a><h3 class="section"> </h3>
+
+<div class="paragraph"> </div>
+
+ Кстати, это позволяет нам дать эквивалентное определение гипотезы Коллатца.
+    Сначала выпишем функцию шага Коллатца в виде отношения: 
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Definition</span> <span class="id" title="var">cs</span> (<span class="id" title="var">n</span> <span class="id" title="var">m</span> : <span class="id" title="var">nat</span>) : <span class="id" title="keyword">Prop</span> := <span class="id" title="var">csf</span> <span class="id" title="var">n</span> = <span class="id" title="var">m</span>.<br/>
+</div>
+
+<div class="doc">
+Это "отношение шага Коллатца" можно подставить в рефлексивно-транзитивное
+    замыкание, чтобы получить _многошаговое отношение Коллатца_, выражающее, что
+    число <span class="inlinecode"><span class="id" title="var">n</span></span> достигает другого числа <span class="inlinecode"><span class="id" title="var">m</span></span> за некоторое число шагов Коллатца: 
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Definition</span> <span class="id" title="var">cms</span> <span class="id" title="var">n</span> <span class="id" title="var">m</span> := <span class="id" title="var">clos_refl_trans</span> <span class="id" title="var">cs</span> <span class="id" title="var">n</span> <span class="id" title="var">m</span>.<br/>
+<span class="id" title="keyword">Conjecture</span> <span class="id" title="var">collatz'</span> : <span class="id" title="keyword">∀</span> <span class="id" title="var">n</span>, <span class="id" title="var">n</span> ≠ 0 → <span class="id" title="var">cms</span> <span class="id" title="var">n</span> 1.<br/>
+</div>
+
+<div class="doc">
+<a id="lab271"></a><h2 class="section">Пример: Перестановки</h2>
+
+<div class="paragraph"> </div>
+
+ Другое знакомое понятие _перестановки_ также имеет элегантную формулировку
+    в виде индуктивного отношения.  Для простоты давайте сфокусируемся на
+    перестановках списков длины 3.
+
+<div class="paragraph"> </div>
+
+    Мы можем определить такие перестановки с помощью следующих правил:
+<center><table class="infrule">
+<tr class="infruleassumption">
+  <td class="infrule">&nbsp;&nbsp;</td>
+  <td class="infrulenamecol" rowspan="3">
+    (perm3_swap12) &nbsp;
+  </td></tr>
+<tr class="infrulemiddle">
+  <td class="infrule"><hr /></td>
+</tr>
+<tr class="infruleassumption">
+  <td class="infrule">Perm3 [a;b;c] [b;a;c]</td>
+  <td></td>
+</tr>
+</table></center><center><table class="infrule">
+<tr class="infruleassumption">
+  <td class="infrule">&nbsp;&nbsp;</td>
+  <td class="infrulenamecol" rowspan="3">
+    (perm3_swap23) &nbsp;
+  </td></tr>
+<tr class="infrulemiddle">
+  <td class="infrule"><hr /></td>
+</tr>
+<tr class="infruleassumption">
+  <td class="infrule">Perm3 [a;b;c] [a;c;b]</td>
+  <td></td>
+</tr>
+</table></center><center><table class="infrule">
+<tr class="infruleassumption">
+  <td class="infrule">Perm3 l<sub>1</sub> l<sub>2</sub>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Perm3 l<sub>2</sub> l<sub>3</sub></td>
+  <td class="infrulenamecol" rowspan="3">
+    (perm3_trans) &nbsp;
+  </td></tr>
+<tr class="infrulemiddle">
+  <td class="infrule"><hr /></td>
+</tr>
+<tr class="infruleassumption">
+  <td class="infrule">Perm3 l<sub>1</sub> l<sub>3</sub></td>
+  <td></td>
+</tr>
+</table></center>    Так, мы можем получить <span class="inlinecode"><span class="id" title="var">Perm3</span></span> <span class="inlinecode">[1;2;3]</span> <span class="inlinecode">[3;2;1]</span> следующим образом:
+<br/>
+<span class="inlinecode">&nbsp;&nbsp;&nbsp;&nbsp;————————(<span class="id" title="var">perm_swap12</span>)  —————————————————————(<span class="id" title="var">perm_swap23</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Perm3</span> [1;2;3] [2;1;3]  <span class="id" title="var">Perm3</span> [2;1;3] [2;3;1]<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;——————————————————————————————(<span class="id" title="var">perm_trans</span>)  ————————————(<span class="id" title="var">perm_swap12</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Perm3</span> [1;2;3] [2;3;1]                   <span class="id" title="var">Perm</span> [2;3;1] [3;2;1]<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;—————————————————————————————————————————————————————(<span class="id" title="var">perm_trans</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Perm3</span> [1;2;3] [3;2;1]
+</span>
+<div class="paragraph"> </div>
+
+<a id="lab272"></a><h3 class="section"> </h3>
+
+<div class="paragraph"> </div>
+
+ В Rocq, <span class="inlinecode"><span class="id" title="var">Perm3</span></span> получает следующее индуктивное определение: 
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Inductive</span> <span class="id" title="var">Perm3</span> {<span class="id" title="var">X</span> : <span class="id" title="keyword">Type</span>} : <span class="id" title="var">list</span> <span class="id" title="var">X</span> → <span class="id" title="var">list</span> <span class="id" title="var">X</span> → <span class="id" title="keyword">Prop</span> :=<br/>
+&nbsp;&nbsp;| <span class="id" title="var">perm3_swap12</span> (<span class="id" title="var">a</span> <span class="id" title="var">b</span> <span class="id" title="var">c</span> : <span class="id" title="var">X</span>) :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Perm3</span> [<span class="id" title="var">a</span>;<span class="id" title="var">b</span>;<span class="id" title="var">c</span>] [<span class="id" title="var">b</span>;<span class="id" title="var">a</span>;<span class="id" title="var">c</span>]<br/>
+&nbsp;&nbsp;| <span class="id" title="var">perm3_swap23</span> (<span class="id" title="var">a</span> <span class="id" title="var">b</span> <span class="id" title="var">c</span> : <span class="id" title="var">X</span>) :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Perm3</span> [<span class="id" title="var">a</span>;<span class="id" title="var">b</span>;<span class="id" title="var">c</span>] [<span class="id" title="var">a</span>;<span class="id" title="var">c</span>;<span class="id" title="var">b</span>]<br/>
+&nbsp;&nbsp;| <span class="id" title="var">perm3_trans</span> (<span class="id" title="var">l<sub>1</sub></span> <span class="id" title="var">l<sub>2</sub></span> <span class="id" title="var">l<sub>3</sub></span> : <span class="id" title="var">list</span> <span class="id" title="var">X</span>) :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Perm3</span> <span class="id" title="var">l<sub>1</sub></span> <span class="id" title="var">l<sub>2</sub></span> → <span class="id" title="var">Perm3</span> <span class="id" title="var">l<sub>2</sub></span> <span class="id" title="var">l<sub>3</sub></span> → <span class="id" title="var">Perm3</span> <span class="id" title="var">l<sub>1</sub></span> <span class="id" title="var">l<sub>3</sub></span>.<br/>
+</div>
+
+<div class="doc">
+<a id="lab273"></a><h2 class="section">Пример: Чётность (снова)</h2>
+
+<div class="paragraph"> </div>
+
+ Мы видели как минимум два способа формализации понятия чётности:
+
+<div class="paragraph"> </div>
+
+      (1) <span class="inlinecode"><span class="id" title="var">even</span></span> <span class="inlinecode"><span class="id" title="var">n</span></span> <span class="inlinecode">=</span> <span class="inlinecode"><span class="id" title="var">true</span></span> (используя рекурсивную функцию <span class="inlinecode"><span class="id" title="var">even</span></span>), или
+
+<div class="paragraph"> </div>
+
+      (2) <span class="inlinecode"><span class="id" title="tactic">∃</span></span> <span class="inlinecode"><span class="id" title="var">k</span>,</span> <span class="inlinecode"><span class="id" title="var">n</span></span> <span class="inlinecode">=</span> <span class="inlinecode"><span class="id" title="var">double</span></span> <span class="inlinecode"><span class="id" title="var">k</span></span> (используя квантор существования). 
+<div class="paragraph"> </div>
+
+<a id="lab274"></a><h3 class="section"> </h3>
+
+<div class="paragraph"> </div>
+
+ Третий способ, который мы будем использовать в качестве подопытного кролика
+    в этой главе, это сказать, что число чётное, если мы можем _установить_ его
+    чётность, пользуясь следующими двумя правилами вывода:
+<center><table class="infrule">
+<tr class="infruleassumption">
+  <td class="infrule">&nbsp;&nbsp;</td>
+  <td class="infrulenamecol" rowspan="3">
+    (ev_0) &nbsp;
+  </td></tr>
+<tr class="infrulemiddle">
+  <td class="infrule"><hr /></td>
+</tr>
+<tr class="infruleassumption">
+  <td class="infrule">ev 0</td>
+  <td></td>
+</tr>
+</table></center><center><table class="infrule">
+<tr class="infruleassumption">
+  <td class="infrule">ev n</td>
+  <td class="infrulenamecol" rowspan="3">
+    (ev_SS) &nbsp;
+  </td></tr>
+<tr class="infrulemiddle">
+  <td class="infrule"><hr /></td>
+</tr>
+<tr class="infruleassumption">
+  <td class="infrule">ev (S (S n))</td>
+  <td></td>
+</tr>
+</table></center>
+<div class="paragraph"> </div>
+
+ Вот как с помощью этих правил доказывать чётность четырёх:
+<br/>
+<span class="inlinecode">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;———— (<span class="id" title="var">ev_0</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">ev</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;———————————— (<span class="id" title="var">ev_SS</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">ev</span> (<span class="id" title="var">S</span> (<span class="id" title="var">S</span> 0))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;———————————————————— (<span class="id" title="var">ev_SS</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">ev</span> (<span class="id" title="var">S</span> (<span class="id" title="var">S</span> (<span class="id" title="var">S</span> (<span class="id" title="var">S</span> 0))))
+</span>
+<div class="paragraph"> </div>
+
+<a id="lab275"></a><h3 class="section"> </h3>
+
+<div class="paragraph"> </div>
+
+ Мы можем перевести "бумажное" определение чётности выше в <span class="inlinecode">Индуктивное</span>
+    объявление, где каждая "возможность числа оказаться чётным" соответствует
+    своему собственному конструктору: 
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Inductive</span> <span class="id" title="var">ev</span> : <span class="id" title="var">nat</span> → <span class="id" title="keyword">Prop</span> :=<br/>
+&nbsp;&nbsp;| <span class="id" title="var">ev_0</span>                       : <span class="id" title="var">ev</span> 0<br/>
+&nbsp;&nbsp;| <span class="id" title="var">ev_SS</span> (<span class="id" title="var">n</span> : <span class="id" title="var">nat</span>) (<span class="id" title="var">H</span> : <span class="id" title="var">ev</span> <span class="id" title="var">n</span>) : <span class="id" title="var">ev</span> (<span class="id" title="var">S</span> (<span class="id" title="var">S</span> <span class="id" title="var">n</span>)).<br/>
+</div>
+
+<div class="doc">
+Есть как сходства, так и различия между индуктивными _свойствами_
+    вроде <span class="inlinecode"><span class="id" title="var">ev</span></span> и индуктивными _типами_ вроде <span class="inlinecode"><span class="id" title="var">nat</span></span> или <span class="inlinecode"><span class="id" title="var">list</span></span>:
+<br/>
+<span class="inlinecode">&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Inductive</span> <span class="id" title="var">list</span> (<span class="id" title="var">X</span>:<span class="id" title="keyword">Type</span>) : <span class="id" title="keyword">Type</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">nil</span>                       : <span class="id" title="var">list</span> <span class="id" title="var">X</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">cons</span> (<span class="id" title="var">x</span> : <span class="id" title="var">X</span>) (<span class="id" title="var">l</span> : <span class="id" title="var">list</span> <span class="id" title="var">X</span>) : <span class="id" title="var">list</span> <span class="id" title="var">X</span>.<br/>
+]
+</span>    Самая важная разница состоит в том, что конструкторы <span class="inlinecode"><span class="id" title="var">ev</span></span>, <span class="inlinecode"><span class="id" title="var">ev_0</span></span> и <span class="inlinecode"><span class="id" title="var">ev_SS</span></span>,
+    возвращают значения разных типов (<span class="inlinecode"><span class="id" title="var">ev</span></span> <span class="inlinecode">0</span> и <span class="inlinecode"><span class="id" title="var">ev</span></span> <span class="inlinecode">(<span class="id" title="var">S</span></span> <span class="inlinecode">(<span class="id" title="var">S</span></span> <span class="inlinecode"><span class="id" title="var">n</span>))</span>), когда как
+    конструкторы <span class="inlinecode"><span class="id" title="var">list</span></span> всегда возвращают значения типа <span class="inlinecode"><span class="id" title="var">list</span></span> <span class="inlinecode"><span class="id" title="var">X</span></span>. 
+<div class="paragraph"> </div>
+
+<a id="lab276"></a><h3 class="section"> </h3>
+
+<div class="paragraph"> </div>
+
+ Про определение <span class="inlinecode"><span class="id" title="var">ev</span></span> можно думать как про определение свойства
+    <span class="inlinecode"><span class="id" title="var">ev</span></span> <span class="inlinecode">:</span> <span class="inlinecode"><span class="id" title="var">nat</span></span> <span class="inlinecode">→</span> <span class="inlinecode"><span class="id" title="keyword">Prop</span></span> вместе с двумя "конструкторами свидетельств": 
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Check</span> <span class="id" title="var">ev_0</span> : <span class="id" title="var">ev</span> 0.<br/>
+<span class="id" title="keyword">Check</span> <span class="id" title="var">ev_SS</span> : <span class="id" title="keyword">∀</span> (<span class="id" title="var">n</span> : <span class="id" title="var">nat</span>), <span class="id" title="var">ev</span> <span class="id" title="var">n</span> → <span class="id" title="var">ev</span> (<span class="id" title="var">S</span> (<span class="id" title="var">S</span> <span class="id" title="var">n</span>)).<br/>
+</div>
+
+<div class="doc">
+<a id="lab277"></a><h3 class="section"> </h3>
+ Про эти конструкторы можно думать как про "простейшие свидетельства
+    чётности", которыми можно пользоваться как доказанными теоремами.
+    В частности, мы можем использовать тактику <span class="inlinecode"><span class="id" title="tactic">apply</span></span> с этими конструкторами,
+    чтобы получить свидетельства чётности конкретных чисел... 
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Theorem</span> <span class="id" title="var">ev_4</span> : <span class="id" title="var">ev</span> 4.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">apply</span> <span class="id" title="var">ev_SS</span>. <span class="id" title="tactic">apply</span> <span class="id" title="var">ev_SS</span>. <span class="id" title="tactic">apply</span> <span class="id" title="var">ev_0</span>. <span class="id" title="keyword">Qed</span>.<br/>
+</div>
+
+<div class="doc">
+... и использовать синтаксис применения функций, чтобы применить сразу
+    несколько конструкторов: 
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Theorem</span> <span class="id" title="var">ev_4'</span> : <span class="id" title="var">ev</span> 4.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">apply</span> (<span class="id" title="var">ev_SS</span> 2 (<span class="id" title="var">ev_SS</span> 0 <span class="id" title="var">ev_0</span>)). <span class="id" title="keyword">Qed</span>.<br/>
+</div>
+
+<div class="doc">
+Таким образом, мы можем доказывать теоремы с гипотезами,
+    включающими <span class="inlinecode"><span class="id" title="var">ev</span></span>. 
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Theorem</span> <span class="id" title="var">ev_plus4</span> : <span class="id" title="keyword">∀</span> <span class="id" title="var">n</span>, <span class="id" title="var">ev</span> <span class="id" title="var">n</span> → <span class="id" title="var">ev</span> (4 + <span class="id" title="var">n</span>).<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">intros</span> <span class="id" title="var">n</span>. <span class="id" title="tactic">simpl</span>. <span class="id" title="tactic">intros</span> <span class="id" title="var">Hn</span>. <span class="id" title="tactic">apply</span> <span class="id" title="var">ev_SS</span>. <span class="id" title="tactic">apply</span> <span class="id" title="var">ev_SS</span>. <span class="id" title="tactic">apply</span> <span class="id" title="var">Hn</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+</div>
+
+<div class="doc">
+<a id="lab278"></a><h2 class="section">Построение свидетельств перестановки</h2>
+
+<div class="paragraph"> </div>
+
+ Похожим образом, мы можем применять конструкторы свидетельств, чтобы
+    получить свидетельство <span class="inlinecode"><span class="id" title="var">Perm3</span></span> <span class="inlinecode">[1;2;3]</span> <span class="inlinecode">[3;2;1]</span>: 
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Lemma</span> <span class="id" title="var">Perm3_rev</span> : <span class="id" title="var">Perm3</span> [1;2;3] [3;2;1].<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">apply</span> <span class="id" title="var">perm3_trans</span> <span class="id" title="keyword">with</span> (<span class="id" title="var">l<sub>2</sub></span>:=[2;3;1]).<br/>
+&nbsp;&nbsp;- <span class="id" title="tactic">apply</span> <span class="id" title="var">perm3_trans</span> <span class="id" title="keyword">with</span> (<span class="id" title="var">l<sub>2</sub></span>:=[2;1;3]).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;+ <span class="id" title="tactic">apply</span> <span class="id" title="var">perm3_swap12</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;+ <span class="id" title="tactic">apply</span> <span class="id" title="var">perm3_swap23</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="tactic">apply</span> <span class="id" title="var">perm3_swap12</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+</div>
+
+<div class="doc">
+<a id="lab279"></a><h3 class="section"> </h3>
+ И, опять же, мы можем использовать синтаксис применения функций, чтобы
+    скомбинировать несколько конструкторов. (Обратите внимание, что проверка
+    типов в Rocq выводит не только типы, но и значения, когда они понятны
+    из контекста.) 
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Lemma</span> <span class="id" title="var">Perm3_rev'</span> : <span class="id" title="var">Perm3</span> [1;2;3] [3;2;1].<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">apply</span> (<span class="id" title="var">perm3_trans</span> <span class="id" title="var">_</span> [2;3;1] <span class="id" title="var">_</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">perm3_trans</span> <span class="id" title="var">_</span> [2;1;3] <span class="id" title="var">_</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">perm3_swap12</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">perm3_swap23</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">perm3_swap12</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span>)).<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+</div>
+
+<div class="doc">
+Так, деревья вывода, которые мы выписывали выше, очень похожи на то,
+    что реально происходит в Rocq.  Формально говоря, мы используем конструкторы
+    свидетельств для построения _деревьев вывода_, похожих на конечные деревья,
+    которые мы строили, используя конструкторы типов данных вроде nat, list,
+    бинарных деревьев и т.д. 
+</div>
+
+<div class="doc">
+<a id="lab280"></a><h1 class="section">Использование свидетельств в доказательствах</h1>
+
+<div class="paragraph"> </div>
+
+ Помимо _построения_ свидетельств чётности чисел, мы также можем _разбирать
+    случаи_ по таким свидетельствам, рассуждая о том, как они могли быть
+    построены.
+
+<div class="paragraph"> </div>
+
+    Определение <span class="inlinecode"><span class="id" title="var">ev</span></span> через <span class="inlinecode"><span class="id" title="keyword">Inductive</span></span> говорить Rocq не только то, что
+    конструкторы <span class="inlinecode"><span class="id" title="var">ev_0</span></span> и <span class="inlinecode"><span class="id" title="var">ev_SS</span></span> -- корректные способы построения свидетельства
+    <span class="inlinecode"><span class="id" title="var">ev</span></span>, но и то, что эти два конструктора -- _единственные_ такие способы. 
+<div class="paragraph"> </div>
+
+<a id="lab281"></a><h3 class="section"> </h3>
+ Другими словами, если кто-то предъявляет нам свидетельство <span class="inlinecode"><span class="id" title="var">E</span></span> утверждения
+    <span class="inlinecode"><span class="id" title="var">ev</span></span> <span class="inlinecode"><span class="id" title="var">n</span></span>, то мы знаем, что <span class="inlinecode"><span class="id" title="var">E</span></span> устроено одним из двух способов:
+
+<div class="paragraph"> </div>
+
+<ul class="doclist">
+<li> <span class="inlinecode"><span class="id" title="var">E</span></span> <span class="inlinecode">=</span> <span class="inlinecode"><span class="id" title="var">ev_0</span></span> и <span class="inlinecode"><span class="id" title="var">n</span></span> <span class="inlinecode">=</span> <span class="inlinecode"><span class="id" title="var">O</span></span>, либо
+
+</li>
+<li> <span class="inlinecode"><span class="id" title="var">E</span></span> <span class="inlinecode">=</span> <span class="inlinecode"><span class="id" title="var">ev_SS</span></span> <span class="inlinecode"><span class="id" title="var">n'</span></span> <span class="inlinecode"><span class="id" title="var">E'</span></span> и <span class="inlinecode"><span class="id" title="var">n</span></span> <span class="inlinecode">=</span> <span class="inlinecode"><span class="id" title="var">S</span></span> <span class="inlinecode">(<span class="id" title="var">S</span></span> <span class="inlinecode"><span class="id" title="var">n'</span>)</span>, где <span class="inlinecode"><span class="id" title="var">E'</span></span> <span class="inlinecode">:</span> <span class="inlinecode"><span class="id" title="var">ev</span></span> <span class="inlinecode"><span class="id" title="var">n'</span></span>. 
+</li>
+</ul>
+
+<div class="paragraph"> </div>
+
+ Это наводит на мысль, что, можем быть, по таким свидетельствам можно
+    _разбирать случаи_, или даже запускать _индукцию_... 
+<div class="paragraph"> </div>
+
+<a id="lab282"></a><h2 class="section">Разбор и инверсия свидетельств</h2>
+
+<div class="paragraph"> </div>
+
+ Мы можем доказать нашу характеризацию <span class="inlinecode"><span class="id" title="var">ev</span></span> <span class="inlinecode"><span class="id" title="var">n</span></span>, используя <span class="inlinecode"><span class="id" title="tactic">destruct</span></span>.
+
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Lemma</span> <span class="id" title="var">ev_inversion</span> : <span class="id" title="keyword">∀</span> (<span class="id" title="var">n</span> : <span class="id" title="var">nat</span>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">ev</span> <span class="id" title="var">n</span> →<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">n</span> = 0) ∨ (<span class="id" title="tactic">∃</span> <span class="id" title="var">n'</span>, <span class="id" title="var">n</span> = <span class="id" title="var">S</span> (<span class="id" title="var">S</span> <span class="id" title="var">n'</span>) ∧ <span class="id" title="var">ev</span> <span class="id" title="var">n'</span>).<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">intros</span> <span class="id" title="var">n</span> <span class="id" title="var">E</span>. <span class="id" title="tactic">destruct</span> <span class="id" title="var">E</span> <span class="id" title="keyword">as</span> [ | <span class="id" title="var">n'</span> <span class="id" title="var">E'</span>] <span class="id" title="var">eqn</span>:<span class="id" title="var">EE</span>.<br/>
+&nbsp;&nbsp;- <span class="comment">(*&nbsp;E&nbsp;=&nbsp;ev_0&nbsp;:&nbsp;ev&nbsp;0&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">left</span>. <span class="id" title="tactic">reflexivity</span>.<br/>
+&nbsp;&nbsp;- <span class="comment">(*&nbsp;E&nbsp;=&nbsp;ev_SS&nbsp;n'&nbsp;E'&nbsp;:&nbsp;ev&nbsp;(S&nbsp;(S&nbsp;n'))&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">right</span>. <span class="id" title="tactic">∃</span> <span class="id" title="var">n'</span>. <span class="id" title="tactic">split</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="tactic">apply</span> <span class="id" title="var">E'</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+</div>
+
+<div class="doc">
+Факты вроде этого часто называют "леммами об инверсии", поскольку они
+    позволяют нам как бы "развернуть вспять" некоторую информацию, чтобы
+    рассуждать о всевозможных способах того, каким образом эта информация могла
+    быть получена. 
+<div class="paragraph"> </div>
+
+<a id="lab283"></a><h3 class="section"> </h3>
+
+<div class="paragraph"> </div>
+
+ Мы можем использовать лемму об инверсии, которую мы доказали выше, чтобы
+    лучше структурировать доказательства: 
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Theorem</span> <span class="id" title="var">evSS_ev</span> : <span class="id" title="keyword">∀</span> <span class="id" title="var">n</span>, <span class="id" title="var">ev</span> (<span class="id" title="var">S</span> (<span class="id" title="var">S</span> <span class="id" title="var">n</span>)) → <span class="id" title="var">ev</span> <span class="id" title="var">n</span>.<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">intros</span> <span class="id" title="var">n</span> <span class="id" title="var">E</span>. <span class="id" title="tactic">apply</span> <span class="id" title="var">ev_inversion</span> <span class="id" title="keyword">in</span> <span class="id" title="var">E</span>. <span class="id" title="tactic">destruct</span> <span class="id" title="var">E</span> <span class="id" title="keyword">as</span> [<span class="id" title="var">H<sub>0</sub></span>|<span class="id" title="var">H<sub>1</sub></span>].<br/>
+&nbsp;&nbsp;- <span class="id" title="tactic">discriminate</span> <span class="id" title="var">H<sub>0</sub></span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="tactic">destruct</span> <span class="id" title="var">H<sub>1</sub></span> <span class="id" title="keyword">as</span> [<span class="id" title="var">n'</span> [<span class="id" title="var">Hnn'</span> <span class="id" title="var">E'</span>]]. <span class="id" title="tactic">injection</span> <span class="id" title="var">Hnn'</span> <span class="id" title="keyword">as</span> <span class="id" title="var">Hnn'</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <span class="id" title="var">Hnn'</span>. <span class="id" title="tactic">apply</span> <span class="id" title="var">E'</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+</div>
+
+<div class="doc">
+<a id="lab284"></a><h3 class="section"> </h3>
+ Rocq предоставляет тактику <span class="inlinecode"><span class="id" title="tactic">inversion</span></span>, применяющую лемму об инверсии
+    и убирающую неприменимые случаи. 
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Theorem</span> <span class="id" title="var">evSS_ev'</span> : <span class="id" title="keyword">∀</span> <span class="id" title="var">n</span>,<br/>
+&nbsp;&nbsp;<span class="id" title="var">ev</span> (<span class="id" title="var">S</span> (<span class="id" title="var">S</span> <span class="id" title="var">n</span>)) → <span class="id" title="var">ev</span> <span class="id" title="var">n</span>.<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">intros</span> <span class="id" title="var">n</span> <span class="id" title="var">E</span>. <span class="id" title="tactic">inversion</span> <span class="id" title="var">E</span> <span class="id" title="keyword">as</span> [| <span class="id" title="var">n'</span> <span class="id" title="var">E'</span> <span class="id" title="var">Hnn'</span>].<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;Здесь&nbsp;мы&nbsp;уже&nbsp;разбираем&nbsp;случай&nbsp;<span class="inlinecode"><span class="id" title="var">E</span></span> <span class="inlinecode">=</span> <span class="inlinecode"><span class="id" title="var">ev_SS</span></span> <span class="inlinecode"><span class="id" title="var">n'</span></span> <span class="inlinecode"><span class="id" title="var">E'</span></span>.&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id" title="tactic">apply</span> <span class="id" title="var">E'</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+</div>
+
+<div class="doc">
+<a id="lab285"></a><h3 class="section"> </h3>
+ Мы можем использовать <span class="inlinecode"><span class="id" title="tactic">inversion</span></span>, чтобы заново доказать некоторые
+    теоремы из <span class="inlinecode"><span class="id" title="var">Tactics.v</span></span>.
+
+<div class="paragraph"> </div>
+
+    Обратите внимание, что <span class="inlinecode"><span class="id" title="tactic">inversion</span></span> работает и на равенствах. 
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Theorem</span> <span class="id" title="var">inversion_ex<sub>1</sub></span> : <span class="id" title="keyword">∀</span> (<span class="id" title="var">n</span> <span class="id" title="var">m</span> <span class="id" title="var">o</span> : <span class="id" title="var">nat</span>),<br/>
+&nbsp;&nbsp;[<span class="id" title="var">n</span>; <span class="id" title="var">m</span>] = [<span class="id" title="var">o</span>; <span class="id" title="var">o</span>] → [<span class="id" title="var">n</span>] = [<span class="id" title="var">m</span>].<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">intros</span> <span class="id" title="var">n</span> <span class="id" title="var">m</span> <span class="id" title="var">o</span> <span class="id" title="var">H</span>. <span class="id" title="tactic">inversion</span> <span class="id" title="var">H</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/><hr class='doublespaceincode'/>
+<span class="id" title="keyword">Theorem</span> <span class="id" title="var">inversion_ex<sub>2</sub></span> : <span class="id" title="keyword">∀</span> (<span class="id" title="var">n</span> : <span class="id" title="var">nat</span>),<br/>
+&nbsp;&nbsp;<span class="id" title="var">S</span> <span class="id" title="var">n</span> = <span class="id" title="var">O</span> → 2 + 2 = 5.<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">intros</span> <span class="id" title="var">n</span> <span class="id" title="var">contra</span>. <span class="id" title="tactic">inversion</span> <span class="id" title="var">contra</span>. <span class="id" title="keyword">Qed</span>.<br/>
+</div>
+
+<div class="doc">
+<a id="lab286"></a><h3 class="section"> </h3>
+ Тактика <span class="inlinecode"><span class="id" title="tactic">inversion</span></span> работает на любом <span class="inlinecode"><span class="id" title="var">H</span></span> <span class="inlinecode">:</span> <span class="inlinecode"><span class="id" title="var">P</span></span>, где <span class="inlinecode"><span class="id" title="var">P</span></span> определено
+    <span class="inlinecode">Индуктивно</span>:
+
+<div class="paragraph"> </div>
+
+<ul class="doclist">
+<li> Создаёт по подцели на каждый конструктор <span class="inlinecode"><span class="id" title="var">P</span></span>, где <span class="inlinecode"><span class="id" title="var">H</span></span> ограничено видом
+        конструктора.
+
+<div class="paragraph"> </div>
+
+
+</li>
+<li> Закрывает противоречивые подцели (как в случае <span class="inlinecode"><span class="id" title="var">ev_0</span></span> выше).
+
+<div class="paragraph"> </div>
+
+
+</li>
+<li> Генерирует вспомогательные равенства (как в случае <span class="inlinecode"><span class="id" title="var">ev_SS</span></span> выше). 
+</li>
+</ul>
+
+<div class="paragraph"> </div>
+
+<a id="lab287"></a><h3 class="section"> </h3>
+
+<div class="paragraph"> </div>
+
+ Давайте попробуем показать, что наши старые определения чётности
+    (основанные на <span class="inlinecode"><span class="id" title="var">double</span></span>) следуют из нового. 
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Lemma</span> <span class="id" title="var">ev_Even_firsttry</span> : <span class="id" title="keyword">∀</span> <span class="id" title="var">n</span>,<br/>
+&nbsp;&nbsp;<span class="id" title="var">ev</span> <span class="id" title="var">n</span> → <span class="id" title="var">Even</span> <span class="id" title="var">n</span>.<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;РАЗБИРАЕМ&nbsp;НА&nbsp;ЛЕКЦИИ&nbsp;*)</span> <span class="id" title="var">Admitted</span>.<br/>
+</div>
+
+<div class="doc">
+<a id="lab288"></a><h2 class="section">Индукция по свидетельству</h2>
+
+<div class="paragraph"> </div>
+
+ То, что эта история звучит знакомо, не совпадение: мы сталкивались
+    с похожими проблемами в главе <a href="Induction.html"><span class="inlineref">Induction</span></a>, когда пытались доказывать
+    теоремы разбором случаев, когда нам была нужна индукция.  А решение... снова
+    индукция! 
+<div class="paragraph"> </div>
+
+ Вновь попробуем доказать эту лемму: 
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Lemma</span> <span class="id" title="var">ev_Even</span> : <span class="id" title="keyword">∀</span> <span class="id" title="var">n</span>,<br/>
+&nbsp;&nbsp;<span class="id" title="var">ev</span> <span class="id" title="var">n</span> → <span class="id" title="var">Even</span> <span class="id" title="var">n</span>.<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">unfold</span> <span class="id" title="var">Even</span>. <span class="id" title="tactic">intros</span> <span class="id" title="var">n</span> <span class="id" title="var">E</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">induction</span> <span class="id" title="var">E</span> <span class="id" title="keyword">as</span> [|<span class="id" title="var">n'</span> <span class="id" title="var">E'</span> <span class="id" title="var">IH</span>].<br/>
+&nbsp;&nbsp;- <span class="comment">(*&nbsp;E&nbsp;=&nbsp;ev_0&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">∃</span> 0. <span class="id" title="tactic">reflexivity</span>.<br/>
+&nbsp;&nbsp;- <span class="comment">(*&nbsp;E&nbsp;=&nbsp;ev_SS&nbsp;n'&nbsp;E',&nbsp;&nbsp;with&nbsp;IH&nbsp;:&nbsp;Even&nbsp;n'&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">IH</span> <span class="id" title="keyword">as</span> [<span class="id" title="var">k</span> <span class="id" title="var">Hk</span>]. <span class="id" title="tactic">rewrite</span> <span class="id" title="var">Hk</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">∃</span> (<span class="id" title="var">S</span> <span class="id" title="var">k</span>). <span class="id" title="tactic">simpl</span>. <span class="id" title="tactic">reflexivity</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+</div>
+
+<div class="doc">
+<a id="lab289"></a><h1 class="section">Улучшаем рефлексию</h1>
+
+<div class="paragraph"> </div>
+
+ Мы видели, что нам часто нужно связывать булевы вычисления с утверждениями
+    в <span class="inlinecode"><span class="id" title="keyword">Prop</span></span>: 
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Check</span> <span class="id" title="var">eqb_eq</span> : <span class="id" title="keyword">∀</span> <span class="id" title="var">n<sub>1</sub></span> <span class="id" title="var">n<sub>2</sub></span>, (<span class="id" title="var">n<sub>1</sub></span> =? <span class="id" title="var">n<sub>2</sub></span>) = <span class="id" title="var">true</span> ↔ <span class="id" title="var">n<sub>1</sub></span> = <span class="id" title="var">n<sub>2</sub></span>.<br/>
+</div>
+
+<div class="doc">
+Однако это может приводить к рутине в скриптах доказательств. Рассмотрим: 
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Theorem</span> <span class="id" title="var">filter_not_empty_In</span> : <span class="id" title="keyword">∀</span> <span class="id" title="var">n</span> <span class="id" title="var">l</span>,<br/>
+&nbsp;&nbsp;<span class="id" title="var">filter</span> (<span class="id" title="keyword">fun</span> <span class="id" title="var">x</span> ⇒ <span class="id" title="var">n</span> =? <span class="id" title="var">x</span>) <span class="id" title="var">l</span> ≠ [] → <span class="id" title="var">In</span> <span class="id" title="var">n</span> <span class="id" title="var">l</span>.<br/>
+<div class="togglescript" id="proofcontrol1" onclick="toggleDisplay('proof1');toggleDisplay('proofcontrol1')"><span class="show"></span></div>
+<div class="proofscript" id="proof1" onclick="toggleDisplay('proof1');toggleDisplay('proofcontrol1')">
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">intros</span> <span class="id" title="var">n</span> <span class="id" title="var">l</span>. <span class="id" title="tactic">induction</span> <span class="id" title="var">l</span> <span class="id" title="keyword">as</span> [|<span class="id" title="var">m</span> <span class="id" title="var">l'</span> <span class="id" title="var">IHl'</span>].<br/>
+&nbsp;&nbsp;- <span class="comment">(*&nbsp;l&nbsp;=&nbsp;nil&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">simpl</span>. <span class="id" title="tactic">intros</span> <span class="id" title="var">H</span>. <span class="id" title="tactic">apply</span> <span class="id" title="var">H</span>. <span class="id" title="tactic">reflexivity</span>.<br/>
+&nbsp;&nbsp;- <span class="comment">(*&nbsp;l&nbsp;=&nbsp;m&nbsp;::&nbsp;l'&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">simpl</span>. <span class="id" title="tactic">destruct</span> (<span class="id" title="var">n</span> =? <span class="id" title="var">m</span>) <span class="id" title="var">eqn</span>:<span class="id" title="var">H</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;+ <span class="comment">(*&nbsp;n&nbsp;=?&nbsp;m&nbsp;=&nbsp;true&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span> <span class="id" title="var">_</span>. <span class="id" title="tactic">rewrite</span> <span class="id" title="var">eqb_eq</span> <span class="id" title="keyword">in</span> <span class="id" title="var">H</span>. <span class="id" title="tactic">rewrite</span> <span class="id" title="var">H</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">left</span>. <span class="id" title="tactic">reflexivity</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;+ <span class="comment">(*&nbsp;n&nbsp;=?&nbsp;m&nbsp;=&nbsp;false&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span> <span class="id" title="var">H'</span>. <span class="id" title="tactic">right</span>. <span class="id" title="tactic">apply</span> <span class="id" title="var">IHl'</span>. <span class="id" title="tactic">apply</span> <span class="id" title="var">H'</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+</div>
+</div>
+
+<div class="doc">
+Первая подцель (где <span class="inlinecode"><span class="id" title="var">n</span></span> <span class="inlinecode">=?</span> <span class="inlinecode"><span class="id" title="var">m</span></span> <span class="inlinecode">=</span> <span class="inlinecode"><span class="id" title="var">true</span></span>) выглядит неуклюже, поскольку нам
+    нужно явно "переключаться между мирами".
+
+<div class="paragraph"> </div>
+
+    Было бы неприятно всё время повторять эти выкладки. 
+<div class="paragraph"> </div>
+
+<a id="lab290"></a><h3 class="section"> </h3>
+ Мы можем упростить этот ход рассуждений, определив индуктивное утверждение,
+    которое даёт улучшенный способ разбора случаев для <span class="inlinecode"><span class="id" title="var">n</span></span> <span class="inlinecode">=?</span> <span class="inlinecode"><span class="id" title="var">m</span></span>.  Вместо того,
+    чтобы генерировать гипотезу <span class="inlinecode">(<span class="id" title="var">n</span></span> <span class="inlinecode">=?</span> <span class="inlinecode"><span class="id" title="var">m</span>)</span> <span class="inlinecode">=</span> <span class="inlinecode"><span class="id" title="var">true</span></span>, которое требует некоторого
+    причёсывания перед использованием, улучшенный способ сразу даст нужное нам
+    утверждение: <span class="inlinecode"><span class="id" title="var">n</span></span> <span class="inlinecode">=</span> <span class="inlinecode"><span class="id" title="var">m</span></span>.
+
+<div class="paragraph"> </div>
+
+    Следуя терминологии, введённой в <a href="Logic.html"><span class="inlineref">Logic</span></a>, мы называем это "принципом
+    рефлексии на равенстве чисел", и мы говорим, что булево значение <span class="inlinecode"><span class="id" title="var">n</span></span> <span class="inlinecode">=?</span> <span class="inlinecode"><span class="id" title="var">m</span></span>
+    _отражено_ в утверждении <span class="inlinecode"><span class="id" title="var">n</span></span> <span class="inlinecode">=</span> <span class="inlinecode"><span class="id" title="var">m</span></span>. 
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Inductive</span> <span class="id" title="var">reflect</span> (<span class="id" title="var">P</span> : <span class="id" title="keyword">Prop</span>) : <span class="id" title="var">bool</span> → <span class="id" title="keyword">Prop</span> :=<br/>
+&nbsp;&nbsp;| <span class="id" title="var">ReflectT</span> (<span class="id" title="var">H</span> :   <span class="id" title="var">P</span>) : <span class="id" title="var">reflect</span> <span class="id" title="var">P</span> <span class="id" title="var">true</span><br/>
+&nbsp;&nbsp;| <span class="id" title="var">ReflectF</span> (<span class="id" title="var">H</span> : ¬<span class="id" title="var">P</span>) : <span class="id" title="var">reflect</span> <span class="id" title="var">P</span> <span class="id" title="var">false</span>.<br/>
+</div>
+
+<div class="doc">
+Заметьте, что единственный способ произвести свидетельство для
+    <span class="inlinecode"><span class="id" title="var">reflect</span></span> <span class="inlinecode"><span class="id" title="var">P</span></span> <span class="inlinecode"><span class="id" title="var">true</span></span> -- показать <span class="inlinecode"><span class="id" title="var">P</span></span> и использовать конструктор <span class="inlinecode"><span class="id" title="var">ReflectT</span></span>.
+
+<div class="paragraph"> </div>
+
+    Если мы применим <span class="inlinecode"><span class="id" title="tactic">inversion</span></span>, то мы можем извлечь _свидетеля_ <span class="inlinecode"><span class="id" title="var">P</span></span>
+    из свидетельства <span class="inlinecode"><span class="id" title="var">reflect</span></span> <span class="inlinecode"><span class="id" title="var">P</span></span> <span class="inlinecode"><span class="id" title="var">true</span></span>. 
+<div class="paragraph"> </div>
+
+ Чтобы использовать это наблюдение, для начала докажем, что утверждения
+    <span class="inlinecode"><span class="id" title="var">P</span></span> <span class="inlinecode">↔</span> <span class="inlinecode"><span class="id" title="var">b</span></span> <span class="inlinecode">=</span> <span class="inlinecode"><span class="id" title="var">true</span></span> и <span class="inlinecode"><span class="id" title="var">reflect</span></span> <span class="inlinecode"><span class="id" title="var">P</span></span> <span class="inlinecode"><span class="id" title="var">b</span></span> действительно эквивалентны.  Для начала
+    докажем импликацию слева направо: 
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Theorem</span> <span class="id" title="var">iff_reflect</span> : <span class="id" title="keyword">∀</span> <span class="id" title="var">P</span> <span class="id" title="var">b</span>, (<span class="id" title="var">P</span> ↔ <span class="id" title="var">b</span> = <span class="id" title="var">true</span>) → <span class="id" title="var">reflect</span> <span class="id" title="var">P</span> <span class="id" title="var">b</span>.<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;РАЗБИРАЕМ&nbsp;НА&nbsp;ЛЕКЦИИ&nbsp;*)</span> <span class="id" title="var">Admitted</span>.<br/>
+</div>
+
+<div class="doc">
+(Следствие справа налево оставлено в качестве упражнения.) 
+<div class="paragraph"> </div>
+
+<a id="lab291"></a><h3 class="section"> </h3>
+ Мы можем думать о <span class="inlinecode"><span class="id" title="var">reflect</span></span> как о разновидности связки "если и только если";
+    преимущество <span class="inlinecode"><span class="id" title="var">reflect</span></span> в том, что, разбирая случаи по <span class="inlinecode"><span class="id" title="var">reflect</span></span> <span class="inlinecode"><span class="id" title="var">P</span></span> <span class="inlinecode"><span class="id" title="var">b</span></span>, мы
+    можем производить разбор случаев по <span class="inlinecode"><span class="id" title="var">b</span></span>, _в тот же самый момент_ генерируя
+    подходящие гипотезы в случаях (<span class="inlinecode"><span class="id" title="var">P</span></span> в первой подцели, <span class="inlinecode">¬</span> <span class="inlinecode"><span class="id" title="var">P</span></span> во второй). 
+<div class="paragraph"> </div>
+
+<a id="lab292"></a><h3 class="section"> </h3>
+ Давайте используем <span class="inlinecode"><span class="id" title="var">reflect</span></span>, чтобы произвести более красивое доказательство
+    <span class="inlinecode"><span class="id" title="var">filter_not_empty_In</span></span>.
+
+<div class="paragraph"> </div>
+
+    Начнём с перевода леммы <span class="inlinecode"><span class="id" title="var">eqb_eq</span></span> в терминах <span class="inlinecode"><span class="id" title="var">reflect</span></span>: 
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Lemma</span> <span class="id" title="var">eqbP</span> : <span class="id" title="keyword">∀</span> <span class="id" title="var">n</span> <span class="id" title="var">m</span>, <span class="id" title="var">reflect</span> (<span class="id" title="var">n</span> = <span class="id" title="var">m</span>) (<span class="id" title="var">n</span> =? <span class="id" title="var">m</span>).<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">intros</span> <span class="id" title="var">n</span> <span class="id" title="var">m</span>. <span class="id" title="tactic">apply</span> <span class="id" title="var">iff_reflect</span>. <span class="id" title="tactic">rewrite</span> <span class="id" title="var">eqb_eq</span>. <span class="id" title="tactic">reflexivity</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+</div>
+
+<div class="doc">
+<a id="lab293"></a><h3 class="section"> </h3>
+ Доказательство <span class="inlinecode"><span class="id" title="var">filter_not_empty_In</span></span> теперь продвигается следующим образом.
+    Обратите внимание, как вызовы <span class="inlinecode"><span class="id" title="tactic">destruct</span></span> и <span class="inlinecode"><span class="id" title="tactic">rewrite</span></span> в раннем доказательстве
+    этой теоремы совмещены в один вызов <span class="inlinecode"><span class="id" title="tactic">destruct</span></span>. 
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Theorem</span> <span class="id" title="var">filter_not_empty_In'</span> : <span class="id" title="keyword">∀</span> <span class="id" title="var">n</span> <span class="id" title="var">l</span>,<br/>
+&nbsp;&nbsp;<span class="id" title="var">filter</span> (<span class="id" title="keyword">fun</span> <span class="id" title="var">x</span> ⇒ <span class="id" title="var">n</span> =? <span class="id" title="var">x</span>) <span class="id" title="var">l</span> ≠ [] →<br/>
+&nbsp;&nbsp;<span class="id" title="var">In</span> <span class="id" title="var">n</span> <span class="id" title="var">l</span>.<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">intros</span> <span class="id" title="var">n</span> <span class="id" title="var">l</span>. <span class="id" title="tactic">induction</span> <span class="id" title="var">l</span> <span class="id" title="keyword">as</span> [|<span class="id" title="var">m</span> <span class="id" title="var">l'</span> <span class="id" title="var">IHl'</span>].<br/>
+&nbsp;&nbsp;- <span class="comment">(*&nbsp;l&nbsp;=&nbsp;<span class="inlinecode"></span>&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">simpl</span>. <span class="id" title="tactic">intros</span> <span class="id" title="var">H</span>. <span class="id" title="tactic">apply</span> <span class="id" title="var">H</span>. <span class="id" title="tactic">reflexivity</span>.<br/>
+&nbsp;&nbsp;- <span class="comment">(*&nbsp;l&nbsp;=&nbsp;m&nbsp;::&nbsp;l'&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">simpl</span>. <span class="id" title="tactic">destruct</span> (<span class="id" title="var">eqbP</span> <span class="id" title="var">n</span> <span class="id" title="var">m</span>) <span class="id" title="keyword">as</span> [<span class="id" title="var">EQnm</span> | <span class="id" title="var">NEQnm</span>].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;+ <span class="comment">(*&nbsp;n&nbsp;=&nbsp;m&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span> <span class="id" title="var">_</span>. <span class="id" title="tactic">rewrite</span> <span class="id" title="var">EQnm</span>. <span class="id" title="tactic">left</span>. <span class="id" title="tactic">reflexivity</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;+ <span class="comment">(*&nbsp;n&nbsp;&lt;&gt;&nbsp;m&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span> <span class="id" title="var">H'</span>. <span class="id" title="tactic">right</span>. <span class="id" title="tactic">apply</span> <span class="id" title="var">IHl'</span>. <span class="id" title="tactic">apply</span> <span class="id" title="var">H'</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+</div>
+
+<div class="doc">
+<a id="lab294"></a><h3 class="section"> </h3>
+ Этот небольшой пример демонстрирует, как рефлексия делает доказательства
+    немного более удобными; консистентное использование <span class="inlinecode"><span class="id" title="var">reflect</span></span> в более
+    сложных проектах часто приводит к гораздо более простым и понятным скриптам
+    доказательств. Мы увидим больше примеров в следующих занятиях.
+
+<div class="paragraph"> </div>
+
+    Такой способ использования <span class="inlinecode"><span class="id" title="var">reflect</span></span> был популяризован библиотекой
+    <i>SSReflect</i>, которая была использована для формализации важных результатов в
+    математике, включая теорему о четырёх красках и теорему Фейта-Томпсона.
+    Название SSReflect расшифровывается как <i>small-scale reflection</i>, т.е.
+    систематическое использование рефлексии для замены рутинных шагов
+    в доказательствах на булевы вычисления. 
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="coqindex.html">Index</a><hr/>This page has been generated by <a href="http://rocq-prover.org/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>
