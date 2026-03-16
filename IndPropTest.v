@@ -1,6 +1,6 @@
 Set Warnings "-notation-overridden,-parsing".
 From Stdlib Require Export String.
-From LF Require Import IndProp.
+From Lectures Require Import IndProp.
 
 Parameter MISSING: Type.
 
@@ -27,7 +27,7 @@ Ltac print_manual_grade A :=
 
 End Check.
 
-From LF Require Import IndProp.
+From Lectures Require Import IndProp.
 Import Check.
 
 Goal True.

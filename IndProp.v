@@ -1,7 +1,7 @@
 (** * IndProp: Индуктивные утверждения *)
 
 Set Warnings "-notation-overridden".
-From LF Require Export Logic.
+From Lectures Require Export Logic.
 
 (* ################################################################# *)
 (** * Индуктивные утверждения *)
