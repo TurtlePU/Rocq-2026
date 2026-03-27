@@ -1,0 +1,422 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="common/css/sf.css" rel="stylesheet" type="text/css" />
+<title>Maps: Тотальные и частичные словари</title>
+<link href="common/jquery-ui/jquery-ui.css" rel="stylesheet">
+<script src="common/jquery-ui/external/jquery/jquery.js"></script>
+<script src="common/jquery-ui/jquery-ui.js"></script>
+<script src="common/toggleproofs.js"></script>
+<link href="common/css/lf.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="common/slides.js"></script>
+<link href="common/css/slides.css" rel="stylesheet" type="text/css"/>
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+<div id='logoinheader'><a href='https://softwarefoundations.cis.upenn.edu'>
+<img src='common/media/image/sf_logo_sm.png' alt='Software Foundations Logo'></a></div>
+<div class='booktitleinheader'><a href='index.html'>Volume 1: Logical Foundations</a></div>
+<ul id='menu'>
+   <li class='section_name'><a href='toc.html'>Table of Contents</a></li>
+   <li class='section_name'><a href='coqindex.html'>Index</a></li>
+   <li class='section_name'><a href='deps.html'>Roadmap</a></li>
+</ul>
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Maps<span class="subtitle">Тотальные и частичные словари</span></h1>
+
+
+<div class="doc">
+
+<div class="paragraph"> </div>
+
+ _Мапы_ (или _словари_) постоянно встречаются как в обычном программировании,
+    так и в теории языков программирования; в последующих главах они нам очень
+    пригодятся.
+
+<div class="paragraph"> </div>
+
+    Одновременно с этим, на них будет удобно отработать техники, представленные
+    в предыдущих главах, включая построение структур данных с помощью функций
+    высшего порядка (как в <span class="inlinecode"><span class="id" title="var">Basics</span></span> и <span class="inlinecode"><span class="id" title="var">Poly</span></span>) и использование рефлексии
+    для упрощения доказательств (главы <span class="inlinecode"><span class="id" title="var">Logic</span></span>, <span class="inlinecode"><span class="id" title="var">IndProp</span></span>).
+
+<div class="paragraph"> </div>
+
+    Мы определим две разновидности словарей: _тотальные_ включают элемент
+    "по умолчанию", возвращаемый, если ключа нет в словаре; _частичные_
+    возвращают <span class="inlinecode"><span class="id" title="var">option</span></span>, чтобы иметь возможность сообщать об ошибке.  Частичные
+    словари определяются как тотальные, где в качестве элемента по умолчанию
+    используется <span class="inlinecode"><span class="id" title="var">None</span></span>. 
+</div>
+
+<div class="doc">
+<a id="lab295"></a><h1 class="section">Стандартная библиотека</h1>
+
+<div class="paragraph"> </div>
+
+ С этого момента мы будем пользоваться стандартной библиотекой... 
+</div>
+<div class="code">
+
+<span class="id" title="keyword">From</span> <span class="id" title="var">Stdlib</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="var">Arith</span>.<br/>
+<span class="id" title="keyword">From</span> <span class="id" title="var">Stdlib</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="var">Bool</span>.<br/>
+<span class="id" title="keyword">From</span> <span class="id" title="var">Stdlib</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Export</span> <span class="id" title="var">Strings.String</span>.<br/>
+<span class="id" title="keyword">From</span> <span class="id" title="var">Stdlib</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="var">FunctionalExtensionality</span>.<br/>
+<span class="id" title="keyword">From</span> <span class="id" title="var">Stdlib</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="var">List</span>.<br/>
+<span class="id" title="keyword">Import</span> <span class="id" title="var">ListNotations</span>.<br/>
+</div>
+
+<div class="doc">
+Команда <span class="inlinecode"><span class="id" title="keyword">Locate</span></span> полезна для нахождения места определения нотации.
+    Например, где в стандартной библиотеке определяется операция сложения? 
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Locate</span> "+".<br/>
+</div>
+
+<div class="doc">
+(Нотация <span class="inlinecode">+</span> определяется несколько раз, но для натуральных чисел --
+    единожды.) 
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Print</span> <span class="id" title="var">Init.Nat.add</span>.<br/>
+</div>
+
+<div class="doc">
+Мы увидим ещё пару применений <span class="inlinecode"><span class="id" title="keyword">Locate</span></span> в главе <a href="Imp.html"><span class="inlineref">Imp</span></a>. 
+</div>
+
+<div class="doc">
+<a id="lab296"></a><h1 class="section">Идентификаторы</h1>
+
+<div class="paragraph"> </div>
+
+ Для того, чтобы определить тип словарей, нам нужно определиться с типом
+    ключей, по которым осуществляется доступ к значениям в словаре.  В <span class="inlinecode"><span class="id" title="var">Lists.v</span></span>
+    мы определяли тип <span class="inlinecode"><span class="id" title="var">id</span></span>; здесь и далее мы будем использовать тип <span class="inlinecode"><span class="id" title="var">string</span></span> из
+    стандартной библиотеки. 
+<div class="paragraph"> </div>
+
+ Для сравнения строчек мы используем функцию <span class="inlinecode"><span class="id" title="var">eqb</span></span> из стандартного модуля
+    <span class="inlinecode"><span class="id" title="var">String</span></span>. 
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Check</span> <span class="id" title="var">String.eqb_refl</span> :<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">∀</span> <span class="id" title="var">x</span> : <span class="id" title="var">string</span>, (<span class="id" title="var">x</span> =? <span class="id" title="var">x</span>)%<span class="id" title="var">string</span> = <span class="id" title="var">true</span>.<br/>
+</div>
+
+<div class="doc">
+<a id="lab297"></a><h3 class="section"> </h3>
+ Мы будем пользоваться некоторыми базовыми свойствами равенства строк... 
+</div>
+<div class="code">
+<span class="id" title="keyword">Check</span> <span class="id" title="var">String.eqb_eq</span> :<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">∀</span> <span class="id" title="var">n</span> <span class="id" title="var">m</span> : <span class="id" title="var">string</span>, (<span class="id" title="var">n</span> =? <span class="id" title="var">m</span>)%<span class="id" title="var">string</span> = <span class="id" title="var">true</span> ↔ <span class="id" title="var">n</span> = <span class="id" title="var">m</span>.<br/>
+<span class="id" title="keyword">Check</span> <span class="id" title="var">String.eqb_neq</span> :<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">∀</span> <span class="id" title="var">n</span> <span class="id" title="var">m</span> : <span class="id" title="var">string</span>, (<span class="id" title="var">n</span> =? <span class="id" title="var">m</span>)%<span class="id" title="var">string</span> = <span class="id" title="var">false</span> ↔ <span class="id" title="var">n</span> ≠ <span class="id" title="var">m</span>.<br/>
+<span class="id" title="keyword">Check</span> <span class="id" title="var">String.eqb_spec</span> :<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">∀</span> <span class="id" title="var">x</span> <span class="id" title="var">y</span> : <span class="id" title="var">string</span>, <span class="id" title="var">reflect</span> (<span class="id" title="var">x</span> = <span class="id" title="var">y</span>) (<span class="id" title="var">String.eqb</span> <span class="id" title="var">x</span> <span class="id" title="var">y</span>).<br/>
+</div>
+
+<div class="doc">
+<a id="lab298"></a><h1 class="section">Тотальные словари</h1>
+
+<div class="paragraph"> </div>
+
+ Нашей главной задачей в этой главе будет построить определение частичных
+    отображений, которое будет похоже по поведению на словари из главы
+    <a href="Lists.html"><span class="inlineref">Lists</span></a>, плюс доказать леммы об их поведении.
+
+<div class="paragraph"> </div>
+
+    Правда, в этот раз для построения словарей мы будем использовать _функции_
+    вместо списка пар ключ-значение.  Преимущество такого представления в том,
+    что оно предлагает более "экстенсиональный" взгляд на словари: два словаря,
+    которые отвечают на запросы одинаково, будут представлены одной и той же
+    функцией, а не просто "эквивалентными" списками.  Это упростит
+    доказательства, использующие словари. 
+<div class="paragraph"> </div>
+
+<a id="lab299"></a><h3 class="section"> </h3>
+ Мы строим частичные словари в два этапа.  На первом мы определяем тип
+    _тотальных словарей_, которые возвращают значение по умолчанию, когда мы
+    запрашиваем ключ, отсутствующий в словаре. 
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Definition</span> <span class="id" title="var">total_map</span> (<span class="id" title="var">A</span> : <span class="id" title="keyword">Type</span>) := <span class="id" title="var">string</span> → <span class="id" title="var">A</span>.<br/>
+</div>
+
+<div class="doc">
+По сути, тотальный словарь элементов типа <span class="inlinecode"><span class="id" title="var">A</span></span> -- это просто функция, которая
+    по <span class="inlinecode"><span class="id" title="var">string</span></span>ам возвращает элементы типа <span class="inlinecode"><span class="id" title="var">A</span></span>. 
+<div class="paragraph"> </div>
+
+<a id="lab300"></a><h3 class="section"> </h3>
+ Функция <span class="inlinecode"><span class="id" title="var">t_empty</span></span> по элементу-по-умолчанию возвращает пустой тотальный
+    словарь; этот словарь для любого ключа возвращает этот самый элемент
+    по умолчанию. 
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Definition</span> <span class="id" title="var">t_empty</span> {<span class="id" title="var">A</span> : <span class="id" title="keyword">Type</span>} (<span class="id" title="var">v</span> : <span class="id" title="var">A</span>) : <span class="id" title="var">total_map</span> <span class="id" title="var">A</span> :=<br/>
+&nbsp;&nbsp;(<span class="id" title="keyword">fun</span> <span class="id" title="var">_</span> ⇒ <span class="id" title="var">v</span>).<br/>
+</div>
+
+<div class="doc">
+<a id="lab301"></a><h3 class="section"> </h3>
+ Функция обновления словаря будет поинтереснее. Как и ожидается, она получает
+    словарь <span class="inlinecode"><span class="id" title="var">m</span></span>, ключ <span class="inlinecode"><span class="id" title="var">x</span></span> и значение <span class="inlinecode"><span class="id" title="var">v</span></span> и возвращает новый словарь, который
+    ассоциирует <span class="inlinecode"><span class="id" title="var">x</span></span> с <span class="inlinecode"><span class="id" title="var">v</span></span>, а остальные ключи ассоциированы так же, как в <span class="inlinecode"><span class="id" title="var">m</span></span>.
+    Новизна здесь в том, что мы достигаем этого эффекта, как бы оборачивая новую
+    функцию вокруг старой. 
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Definition</span> <span class="id" title="var">t_update</span> {<span class="id" title="var">A</span> : <span class="id" title="keyword">Type</span>} (<span class="id" title="var">m</span> : <span class="id" title="var">total_map</span> <span class="id" title="var">A</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">x</span> : <span class="id" title="var">string</span>) (<span class="id" title="var">v</span> : <span class="id" title="var">A</span>) :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">fun</span> <span class="id" title="var">x'</span> ⇒ <span class="id" title="keyword">if</span> <span class="id" title="var">String.eqb</span> <span class="id" title="var">x</span> <span class="id" title="var">x'</span> <span class="id" title="keyword">then</span> <span class="id" title="var">v</span> <span class="id" title="keyword">else</span> <span class="id" title="var">m</span> <span class="id" title="var">x'</span>.<br/>
+</div>
+
+<div class="doc">
+Это определение -- хороший пример программирования функций высшего порядка:
+    <span class="inlinecode"><span class="id" title="var">t_update</span></span> получает _функцию_ <span class="inlinecode"><span class="id" title="var">m</span></span> и возвращает новую функцию
+    <span class="inlinecode"><span class="id" title="keyword">fun</span></span> <span class="inlinecode"><span class="id" title="var">x'</span></span> <span class="inlinecode">⇒</span> <span class="inlinecode">...</span>, которая ведёт себя как нам хочется. 
+<div class="paragraph"> </div>
+
+<a id="lab302"></a><h3 class="section"> </h3>
+ Например, мы можем построить словарь, связывающий <span class="inlinecode"><span class="id" title="var">string</span></span>и с <span class="inlinecode"><span class="id" title="var">bool</span></span>ями, где
+    <span class="inlinecode">&quot;<span class="id" title="var">foo</span>&quot;</span> и <span class="inlinecode">&quot;<span class="id" title="var">bar</span>&quot;</span> отображаются в <span class="inlinecode"><span class="id" title="var">true</span></span>, а все остальные ключи -- в <span class="inlinecode"><span class="id" title="var">false</span></span>,
+    вот так: 
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Definition</span> <span class="id" title="var">examplemap</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="var">t_update</span> (<span class="id" title="var">t_update</span> (<span class="id" title="var">t_empty</span> <span class="id" title="var">false</span>) "foo" <span class="id" title="var">true</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"bar" <span class="id" title="var">true</span>.<br/>
+</div>
+
+<div class="doc">
+<a id="lab303"></a><h3 class="section"> </h3>
+ Далее, давайте введём несколько нотаций для работы со словарями. 
+<div class="paragraph"> </div>
+
+ Во-первых, мы используем следующую нотацию для представления пустого
+    тотального словаря со значением по умолчанию. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Notation</span> &quot;'__' '!<span class="nowrap"><span style='font-size:85%;'><span style='vertical-align:5%;'><span style='letter-spacing:-.2em;'>-</span></span>&gt;</span></span>' v" := (<span class="id" title="var">t_empty</span> <span class="id" title="var">v</span>)<br/>
+&nbsp;&nbsp;(<span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 100, <span class="id" title="tactic">right</span> <span class="id" title="keyword">associativity</span>).<br/><hr class='doublespaceincode'/>
+<span class="id" title="keyword">Example</span> <span class="id" title="var">example_empty</span> := (<span class="id" title="var">__</span> !<span class="nowrap"><span style='font-size:85%;'><span style='vertical-align:5%;'><span style='letter-spacing:-.2em;'>-</span></span>&gt;</span></span> <span class="id" title="var">false</span>).<br/>
+</div>
+
+<div class="doc">
+<a id="lab304"></a><h3 class="section"> </h3>
+ Далее мы вводим нотацию для расширения существующего словаря новым
+    присваиванием. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Notation</span> &quot;x '!<span class="nowrap"><span style='font-size:85%;'><span style='vertical-align:5%;'><span style='letter-spacing:-.2em;'>-</span></span>&gt;</span></span>' v ';' m" := (<span class="id" title="var">t_update</span> <span class="id" title="var">m</span> <span class="id" title="var">x</span> <span class="id" title="var">v</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 100, <span class="id" title="var">v</span> <span class="id" title="keyword">constr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 100, <span class="id" title="tactic">right</span> <span class="id" title="keyword">associativity</span>).<br/>
+</div>
+
+<div class="doc">
+<a id="lab305"></a><h3 class="section"> </h3>
+ Теперь <span class="inlinecode"><span class="id" title="var">examplemap</span></span> можно определить вот так: 
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Definition</span> <span class="id" title="var">examplemap'</span> :=<br/>
+&nbsp;&nbsp;( "bar" !<span class="nowrap"><span style='font-size:85%;'><span style='vertical-align:5%;'><span style='letter-spacing:-.2em;'>-</span></span>&gt;</span></span> <span class="id" title="var">true</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;"foo" !<span class="nowrap"><span style='font-size:85%;'><span style='vertical-align:5%;'><span style='letter-spacing:-.2em;'>-</span></span>&gt;</span></span> <span class="id" title="var">true</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">__</span>    !<span class="nowrap"><span style='font-size:85%;'><span style='vertical-align:5%;'><span style='letter-spacing:-.2em;'>-</span></span>&gt;</span></span> <span class="id" title="var">false</span><br/>
+&nbsp;&nbsp;).<br/><hr class='doublespaceincode'/>
+</div>
+
+<div class="doc">
+<a id="lab306"></a><h3 class="section"> </h3>
+ Когда мы будем использовать словари в последующих главах, нам потребуется
+    несколько фундаментальных фактов об их поведении. 
+</div>
+<div class="code">
+<hr class='doublespaceincode'/>
+<span class="id" title="keyword">Lemma</span> <span class="id" title="var">t_apply_empty</span> : <span class="id" title="keyword">∀</span> (<span class="id" title="var">A</span> : <span class="id" title="keyword">Type</span>) (<span class="id" title="var">x</span> : <span class="id" title="var">string</span>) (<span class="id" title="var">v</span> : <span class="id" title="var">A</span>),<br/>
+&nbsp;&nbsp;(<span class="id" title="var">__</span> !<span class="nowrap"><span style='font-size:85%;'><span style='vertical-align:5%;'><span style='letter-spacing:-.2em;'>-</span></span>&gt;</span></span> <span class="id" title="var">v</span>) <span class="id" title="var">x</span> = <span class="id" title="var">v</span>.<br/>
+<div class="togglescript" id="proofcontrol5" onclick="toggleDisplay('proof5');toggleDisplay('proofcontrol5')"><span class="show"></span></div>
+<div class="proofscript" id="proof5" onclick="toggleDisplay('proof5');toggleDisplay('proofcontrol5')">
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;ЗАПОЛНИТЕ&nbsp;ЗДЕСЬ&nbsp;*)</span> <span class="id" title="var">Admitted</span>.<br/>
+</div>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <span class="id" title="var">t_update_eq</span> : <span class="id" title="keyword">∀</span> (<span class="id" title="var">A</span> : <span class="id" title="keyword">Type</span>) (<span class="id" title="var">m</span> : <span class="id" title="var">total_map</span> <span class="id" title="var">A</span>) <span class="id" title="var">x</span> <span class="id" title="var">v</span>,<br/>
+&nbsp;&nbsp;(<span class="id" title="var">x</span> !<span class="nowrap"><span style='font-size:85%;'><span style='vertical-align:5%;'><span style='letter-spacing:-.2em;'>-</span></span>&gt;</span></span> <span class="id" title="var">v</span> ; <span class="id" title="var">m</span>) <span class="id" title="var">x</span> = <span class="id" title="var">v</span>.<br/>
+<div class="togglescript" id="proofcontrol6" onclick="toggleDisplay('proof6');toggleDisplay('proofcontrol6')"><span class="show"></span></div>
+<div class="proofscript" id="proof6" onclick="toggleDisplay('proof6');toggleDisplay('proofcontrol6')">
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;ЗАПОЛНИТЕ&nbsp;ЗДЕСЬ&nbsp;*)</span> <span class="id" title="var">Admitted</span>.<br/>
+</div>
+
+<br/>
+<span class="id" title="keyword">Theorem</span> <span class="id" title="var">t_update_neq</span> : <span class="id" title="keyword">∀</span> (<span class="id" title="var">A</span> : <span class="id" title="keyword">Type</span>) (<span class="id" title="var">m</span> : <span class="id" title="var">total_map</span> <span class="id" title="var">A</span>) <span class="id" title="var">x<sub>1</sub></span> <span class="id" title="var">x<sub>2</sub></span> <span class="id" title="var">v</span>,<br/>
+&nbsp;&nbsp;<span class="id" title="var">x<sub>1</sub></span> ≠ <span class="id" title="var">x<sub>2</sub></span> →<br/>
+&nbsp;&nbsp;(<span class="id" title="var">x<sub>1</sub></span> !<span class="nowrap"><span style='font-size:85%;'><span style='vertical-align:5%;'><span style='letter-spacing:-.2em;'>-</span></span>&gt;</span></span> <span class="id" title="var">v</span> ; <span class="id" title="var">m</span>) <span class="id" title="var">x<sub>2</sub></span> = <span class="id" title="var">m</span> <span class="id" title="var">x<sub>2</sub></span>.<br/>
+<div class="togglescript" id="proofcontrol7" onclick="toggleDisplay('proof7');toggleDisplay('proofcontrol7')"><span class="show"></span></div>
+<div class="proofscript" id="proof7" onclick="toggleDisplay('proof7');toggleDisplay('proofcontrol7')">
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;ЗАПОЛНИТЕ&nbsp;ЗДЕСЬ&nbsp;*)</span> <span class="id" title="var">Admitted</span>.<br/>
+</div>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <span class="id" title="var">t_update_shadow</span> : <span class="id" title="keyword">∀</span> (<span class="id" title="var">A</span> : <span class="id" title="keyword">Type</span>) (<span class="id" title="var">m</span> : <span class="id" title="var">total_map</span> <span class="id" title="var">A</span>) <span class="id" title="var">x</span> <span class="id" title="var">v<sub>1</sub></span> <span class="id" title="var">v<sub>2</sub></span>,<br/>
+&nbsp;&nbsp;(<span class="id" title="var">x</span> !<span class="nowrap"><span style='font-size:85%;'><span style='vertical-align:5%;'><span style='letter-spacing:-.2em;'>-</span></span>&gt;</span></span> <span class="id" title="var">v<sub>2</sub></span> ; <span class="id" title="var">x</span> !<span class="nowrap"><span style='font-size:85%;'><span style='vertical-align:5%;'><span style='letter-spacing:-.2em;'>-</span></span>&gt;</span></span> <span class="id" title="var">v<sub>1</sub></span> ; <span class="id" title="var">m</span>) = (<span class="id" title="var">x</span> !<span class="nowrap"><span style='font-size:85%;'><span style='vertical-align:5%;'><span style='letter-spacing:-.2em;'>-</span></span>&gt;</span></span> <span class="id" title="var">v<sub>2</sub></span> ; <span class="id" title="var">m</span>).<br/>
+<div class="togglescript" id="proofcontrol8" onclick="toggleDisplay('proof8');toggleDisplay('proofcontrol8')"><span class="show"></span></div>
+<div class="proofscript" id="proof8" onclick="toggleDisplay('proof8');toggleDisplay('proofcontrol8')">
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;ЗАПОЛНИТЕ&nbsp;ЗДЕСЬ&nbsp;*)</span> <span class="id" title="var">Admitted</span>.<br/>
+</div>
+</div>
+
+<div class="doc">
+<a id="lab311"></a><h3 class="section"> </h3>
+  
+</div>
+<div class="code">
+<hr class='doublespaceincode'/>
+<span class="id" title="keyword">Theorem</span> <span class="id" title="var">t_update_same</span> : <span class="id" title="keyword">∀</span> (<span class="id" title="var">A</span> : <span class="id" title="keyword">Type</span>) (<span class="id" title="var">m</span> : <span class="id" title="var">total_map</span> <span class="id" title="var">A</span>) <span class="id" title="var">x</span>,<br/>
+&nbsp;&nbsp;(<span class="id" title="var">x</span> !<span class="nowrap"><span style='font-size:85%;'><span style='vertical-align:5%;'><span style='letter-spacing:-.2em;'>-</span></span>&gt;</span></span> <span class="id" title="var">m</span> <span class="id" title="var">x</span> ; <span class="id" title="var">m</span>) = <span class="id" title="var">m</span>.<br/>
+<div class="togglescript" id="proofcontrol9" onclick="toggleDisplay('proof9');toggleDisplay('proofcontrol9')"><span class="show"></span></div>
+<div class="proofscript" id="proof9" onclick="toggleDisplay('proof9');toggleDisplay('proofcontrol9')">
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;ЗАПОЛНИТЕ&nbsp;ЗДЕСЬ&nbsp;*)</span> <span class="id" title="var">Admitted</span>.<br/>
+</div>
+
+<br/>
+<span class="id" title="keyword">Theorem</span> <span class="id" title="var">t_update_permute</span> : <span class="id" title="keyword">∀</span> (<span class="id" title="var">A</span> : <span class="id" title="keyword">Type</span>) (<span class="id" title="var">m</span> : <span class="id" title="var">total_map</span> <span class="id" title="var">A</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">v<sub>1</sub></span> <span class="id" title="var">v<sub>2</sub></span> <span class="id" title="var">x<sub>1</sub></span> <span class="id" title="var">x<sub>2</sub></span>,<br/>
+&nbsp;&nbsp;<span class="id" title="var">x<sub>2</sub></span> ≠ <span class="id" title="var">x<sub>1</sub></span> →<br/>
+&nbsp;&nbsp;(<span class="id" title="var">x<sub>1</sub></span> !<span class="nowrap"><span style='font-size:85%;'><span style='vertical-align:5%;'><span style='letter-spacing:-.2em;'>-</span></span>&gt;</span></span> <span class="id" title="var">v<sub>1</sub></span> ; <span class="id" title="var">x<sub>2</sub></span> !<span class="nowrap"><span style='font-size:85%;'><span style='vertical-align:5%;'><span style='letter-spacing:-.2em;'>-</span></span>&gt;</span></span> <span class="id" title="var">v<sub>2</sub></span> ; <span class="id" title="var">m</span>)<br/>
+&nbsp;&nbsp;=<br/>
+&nbsp;&nbsp;(<span class="id" title="var">x<sub>2</sub></span> !<span class="nowrap"><span style='font-size:85%;'><span style='vertical-align:5%;'><span style='letter-spacing:-.2em;'>-</span></span>&gt;</span></span> <span class="id" title="var">v<sub>2</sub></span> ; <span class="id" title="var">x<sub>1</sub></span> !<span class="nowrap"><span style='font-size:85%;'><span style='vertical-align:5%;'><span style='letter-spacing:-.2em;'>-</span></span>&gt;</span></span> <span class="id" title="var">v<sub>1</sub></span> ; <span class="id" title="var">m</span>).<br/>
+<div class="togglescript" id="proofcontrol10" onclick="toggleDisplay('proof10');toggleDisplay('proofcontrol10')"><span class="show"></span></div>
+<div class="proofscript" id="proof10" onclick="toggleDisplay('proof10');toggleDisplay('proofcontrol10')">
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;ЗАПОЛНИТЕ&nbsp;ЗДЕСЬ&nbsp;*)</span> <span class="id" title="var">Admitted</span>.<br/>
+</div>
+</div>
+
+<div class="doc">
+<a id="lab314"></a><h1 class="section">Частичные словари</h1>
+
+<div class="paragraph"> </div>
+
+ Наконец, мы определяем _частичные словари_ поверх тотальных.  Частичный
+    словарь элементов типа <span class="inlinecode"><span class="id" title="var">A</span></span> -- просто тотальный словарь элементов типа
+    <span class="inlinecode"><span class="id" title="var">option</span></span> <span class="inlinecode"><span class="id" title="var">A</span></span>, где элемент по умолчанию равен <span class="inlinecode"><span class="id" title="var">None</span></span>. 
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Definition</span> <span class="id" title="var">partial_map</span> (<span class="id" title="var">A</span> : <span class="id" title="keyword">Type</span>) := <span class="id" title="var">total_map</span> (<span class="id" title="var">option</span> <span class="id" title="var">A</span>).<br/><hr class='doublespaceincode'/>
+<span class="id" title="keyword">Definition</span> <span class="id" title="var">empty</span> {<span class="id" title="var">A</span> : <span class="id" title="keyword">Type</span>} : <span class="id" title="var">partial_map</span> <span class="id" title="var">A</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="var">t_empty</span> <span class="id" title="var">None</span>.<br/><hr class='doublespaceincode'/>
+<span class="id" title="keyword">Definition</span> <span class="id" title="var">update</span> {<span class="id" title="var">A</span> : <span class="id" title="keyword">Type</span>} (<span class="id" title="var">m</span> : <span class="id" title="var">partial_map</span> <span class="id" title="var">A</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">x</span> : <span class="id" title="var">string</span>) (<span class="id" title="var">v</span> : <span class="id" title="var">A</span>) :=<br/>
+&nbsp;&nbsp;(<span class="id" title="var">x</span> !<span class="nowrap"><span style='font-size:85%;'><span style='vertical-align:5%;'><span style='letter-spacing:-.2em;'>-</span></span>&gt;</span></span> <span class="id" title="var">Some</span> <span class="id" title="var">v</span> ; <span class="id" title="var">m</span>).<br/>
+</div>
+
+<div class="doc">
+<a id="lab315"></a><h3 class="section"> </h3>
+ Мы вводим похожую нотацию для частичных словарей: 
+</div>
+<div class="code">
+<span class="id" title="keyword">Notation</span> &quot;x '<span class="nowrap"><span style='font-size:85%;'><span style='vertical-align:5%;'><span style='letter-spacing:-.2em;'>&#x22A2;</span><span style='font-size:90%;'>&gt;</span></span></span></span>' v ';' m" := (<span class="id" title="var">update</span> <span class="id" title="var">m</span> <span class="id" title="var">x</span> <span class="id" title="var">v</span>)<br/>
+&nbsp;&nbsp;(<span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0, <span class="id" title="var">x</span> <span class="id" title="keyword">constr</span>, <span class="id" title="var">v</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200, <span class="id" title="tactic">right</span> <span class="id" title="keyword">associativity</span>).<br/>
+</div>
+
+<div class="doc">
+Мы также можем опустить последний случай: соответствующий словарь пустой. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Notation</span> &quot;x '<span class="nowrap"><span style='font-size:85%;'><span style='vertical-align:5%;'><span style='letter-spacing:-.2em;'>&#x22A2;</span><span style='font-size:90%;'>&gt;</span></span></span></span>' v" := (<span class="id" title="var">update</span> <span class="id" title="var">empty</span> <span class="id" title="var">x</span> <span class="id" title="var">v</span>)<br/>
+&nbsp;&nbsp;(<span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0, <span class="id" title="var">x</span> <span class="id" title="keyword">constr</span>, <span class="id" title="var">v</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200).<br/><hr class='doublespaceincode'/>
+<span class="id" title="keyword">Definition</span> <span class="id" title="var">examplepmap</span> :=<br/>
+&nbsp;&nbsp;("Church" <span class="nowrap"><span style='font-size:85%;'><span style='vertical-align:5%;'><span style='letter-spacing:-.2em;'>&#x22A2;</span><span style='font-size:90%;'>&gt;</span></span></span></span> <span class="id" title="var">true</span> ; "Turing" <span class="nowrap"><span style='font-size:85%;'><span style='vertical-align:5%;'><span style='letter-spacing:-.2em;'>&#x22A2;</span><span style='font-size:90%;'>&gt;</span></span></span></span> <span class="id" title="var">false</span>).<br/>
+</div>
+
+<div class="doc">
+<a id="lab316"></a><h3 class="section"> </h3>
+ Теперь мы просто переносим все базовые леммы о тотальных словарях. 
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Lemma</span> <span class="id" title="var">apply_empty</span> : <span class="id" title="keyword">∀</span> (<span class="id" title="var">A</span> : <span class="id" title="keyword">Type</span>) (<span class="id" title="var">x</span> : <span class="id" title="var">string</span>),<br/>
+&nbsp;&nbsp;@<span class="id" title="var">empty</span> <span class="id" title="var">A</span> <span class="id" title="var">x</span> = <span class="id" title="var">None</span>.<br/><hr class='doublespaceincode'/>
+<span class="id" title="keyword">Lemma</span> <span class="id" title="var">update_eq</span> : <span class="id" title="keyword">∀</span> (<span class="id" title="var">A</span> : <span class="id" title="keyword">Type</span>) (<span class="id" title="var">m</span> : <span class="id" title="var">partial_map</span> <span class="id" title="var">A</span>) <span class="id" title="var">x</span> <span class="id" title="var">v</span>,<br/>
+&nbsp;&nbsp;(<span class="id" title="var">x</span> <span class="nowrap"><span style='font-size:85%;'><span style='vertical-align:5%;'><span style='letter-spacing:-.2em;'>&#x22A2;</span><span style='font-size:90%;'>&gt;</span></span></span></span> <span class="id" title="var">v</span> ; <span class="id" title="var">m</span>) <span class="id" title="var">x</span> = <span class="id" title="var">Some</span> <span class="id" title="var">v</span>.<br/><hr class='doublespaceincode'/>
+
+<br/>
+<span class="id" title="keyword">Theorem</span> <span class="id" title="var">update_neq</span> : <span class="id" title="keyword">∀</span> (<span class="id" title="var">A</span> : <span class="id" title="keyword">Type</span>) (<span class="id" title="var">m</span> : <span class="id" title="var">partial_map</span> <span class="id" title="var">A</span>) <span class="id" title="var">x<sub>1</sub></span> <span class="id" title="var">x<sub>2</sub></span> <span class="id" title="var">v</span>,<br/>
+&nbsp;&nbsp;<span class="id" title="var">x<sub>2</sub></span> ≠ <span class="id" title="var">x<sub>1</sub></span> →<br/>
+&nbsp;&nbsp;(<span class="id" title="var">x<sub>2</sub></span> <span class="nowrap"><span style='font-size:85%;'><span style='vertical-align:5%;'><span style='letter-spacing:-.2em;'>&#x22A2;</span><span style='font-size:90%;'>&gt;</span></span></span></span> <span class="id" title="var">v</span> ; <span class="id" title="var">m</span>) <span class="id" title="var">x<sub>1</sub></span> = <span class="id" title="var">m</span> <span class="id" title="var">x<sub>1</sub></span>.<br/><hr class='doublespaceincode'/>
+<span class="id" title="keyword">Lemma</span> <span class="id" title="var">update_shadow</span> : <span class="id" title="keyword">∀</span> (<span class="id" title="var">A</span> : <span class="id" title="keyword">Type</span>) (<span class="id" title="var">m</span> : <span class="id" title="var">partial_map</span> <span class="id" title="var">A</span>) <span class="id" title="var">x</span> <span class="id" title="var">v<sub>1</sub></span> <span class="id" title="var">v<sub>2</sub></span>,<br/>
+&nbsp;&nbsp;(<span class="id" title="var">x</span> <span class="nowrap"><span style='font-size:85%;'><span style='vertical-align:5%;'><span style='letter-spacing:-.2em;'>&#x22A2;</span><span style='font-size:90%;'>&gt;</span></span></span></span> <span class="id" title="var">v<sub>2</sub></span> ; <span class="id" title="var">x</span> <span class="nowrap"><span style='font-size:85%;'><span style='vertical-align:5%;'><span style='letter-spacing:-.2em;'>&#x22A2;</span><span style='font-size:90%;'>&gt;</span></span></span></span> <span class="id" title="var">v<sub>1</sub></span> ; <span class="id" title="var">m</span>) = (<span class="id" title="var">x</span> <span class="nowrap"><span style='font-size:85%;'><span style='vertical-align:5%;'><span style='letter-spacing:-.2em;'>&#x22A2;</span><span style='font-size:90%;'>&gt;</span></span></span></span> <span class="id" title="var">v<sub>2</sub></span> ; <span class="id" title="var">m</span>).<br/><hr class='doublespaceincode'/>
+<span class="id" title="keyword">Theorem</span> <span class="id" title="var">update_same</span> : <span class="id" title="keyword">∀</span> (<span class="id" title="var">A</span> : <span class="id" title="keyword">Type</span>) (<span class="id" title="var">m</span> : <span class="id" title="var">partial_map</span> <span class="id" title="var">A</span>) <span class="id" title="var">x</span> <span class="id" title="var">v</span>,<br/>
+&nbsp;&nbsp;<span class="id" title="var">m</span> <span class="id" title="var">x</span> = <span class="id" title="var">Some</span> <span class="id" title="var">v</span> →<br/>
+&nbsp;&nbsp;(<span class="id" title="var">x</span> <span class="nowrap"><span style='font-size:85%;'><span style='vertical-align:5%;'><span style='letter-spacing:-.2em;'>&#x22A2;</span><span style='font-size:90%;'>&gt;</span></span></span></span> <span class="id" title="var">v</span> ; <span class="id" title="var">m</span>) = <span class="id" title="var">m</span>.<br/><hr class='doublespaceincode'/>
+<span class="id" title="keyword">Theorem</span> <span class="id" title="var">update_permute</span> : <span class="id" title="keyword">∀</span> (<span class="id" title="var">A</span> : <span class="id" title="keyword">Type</span>) (<span class="id" title="var">m</span> : <span class="id" title="var">partial_map</span> <span class="id" title="var">A</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">x<sub>1</sub></span> <span class="id" title="var">x<sub>2</sub></span> <span class="id" title="var">v<sub>1</sub></span> <span class="id" title="var">v<sub>2</sub></span>,<br/>
+&nbsp;&nbsp;<span class="id" title="var">x<sub>2</sub></span> ≠ <span class="id" title="var">x<sub>1</sub></span> →<br/>
+&nbsp;&nbsp;(<span class="id" title="var">x<sub>1</sub></span> <span class="nowrap"><span style='font-size:85%;'><span style='vertical-align:5%;'><span style='letter-spacing:-.2em;'>&#x22A2;</span><span style='font-size:90%;'>&gt;</span></span></span></span> <span class="id" title="var">v<sub>1</sub></span> ; <span class="id" title="var">x<sub>2</sub></span> <span class="nowrap"><span style='font-size:85%;'><span style='vertical-align:5%;'><span style='letter-spacing:-.2em;'>&#x22A2;</span><span style='font-size:90%;'>&gt;</span></span></span></span> <span class="id" title="var">v<sub>2</sub></span> ; <span class="id" title="var">m</span>) = (<span class="id" title="var">x<sub>2</sub></span> <span class="nowrap"><span style='font-size:85%;'><span style='vertical-align:5%;'><span style='letter-spacing:-.2em;'>&#x22A2;</span><span style='font-size:90%;'>&gt;</span></span></span></span> <span class="id" title="var">v<sub>2</sub></span> ; <span class="id" title="var">x<sub>1</sub></span> <span class="nowrap"><span style='font-size:85%;'><span style='vertical-align:5%;'><span style='letter-spacing:-.2em;'>&#x22A2;</span><span style='font-size:90%;'>&gt;</span></span></span></span> <span class="id" title="var">v<sub>1</sub></span> ; <span class="id" title="var">m</span>).<br/>
+</div>
+
+<div class="doc">
+<a id="lab317"></a><h3 class="section"> </h3>
+ И последнее: полезно ввести понятие включения частичных словарей,
+    утверждающее, что все записи одного словаря также присутствуют в другом: 
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Definition</span> <span class="id" title="var">includedin</span> {<span class="id" title="var">A</span> : <span class="id" title="keyword">Type</span>} (<span class="id" title="var">m</span> <span class="id" title="var">m'</span> : <span class="id" title="var">partial_map</span> <span class="id" title="var">A</span>) :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">∀</span> <span class="id" title="var">x</span> <span class="id" title="var">v</span>, <span class="id" title="var">m</span> <span class="id" title="var">x</span> = <span class="id" title="var">Some</span> <span class="id" title="var">v</span> → <span class="id" title="var">m'</span> <span class="id" title="var">x</span> = <span class="id" title="var">Some</span> <span class="id" title="var">v</span>.<br/>
+</div>
+
+<div class="doc">
+Тогда мы можем показать, что расширение словарей сохраняет отношение
+    включения, то есть: 
+</div>
+<div class="code">
+
+<span class="id" title="keyword">Lemma</span> <span class="id" title="var">includedin_update</span> : <span class="id" title="keyword">∀</span> (<span class="id" title="var">A</span> : <span class="id" title="keyword">Type</span>) (<span class="id" title="var">m</span> <span class="id" title="var">m'</span> : <span class="id" title="var">partial_map</span> <span class="id" title="var">A</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">x</span> : <span class="id" title="var">string</span>) (<span class="id" title="var">vx</span> : <span class="id" title="var">A</span>),<br/>
+&nbsp;&nbsp;<span class="id" title="var">includedin</span> <span class="id" title="var">m</span> <span class="id" title="var">m'</span> →<br/>
+&nbsp;&nbsp;<span class="id" title="var">includedin</span> (<span class="id" title="var">x</span> <span class="nowrap"><span style='font-size:85%;'><span style='vertical-align:5%;'><span style='letter-spacing:-.2em;'>&#x22A2;</span><span style='font-size:90%;'>&gt;</span></span></span></span> <span class="id" title="var">vx</span> ; <span class="id" title="var">m</span>) (<span class="id" title="var">x</span> <span class="nowrap"><span style='font-size:85%;'><span style='vertical-align:5%;'><span style='letter-spacing:-.2em;'>&#x22A2;</span><span style='font-size:90%;'>&gt;</span></span></span></span> <span class="id" title="var">vx</span> ; <span class="id" title="var">m'</span>).<br/>
+</div>
+
+<div class="doc">
+Это свойство достаточно полезно для рассуждения о языках с переменными --
+    например, просто типизированного лямбда-исчисления, которое мы увидим
+    на одном из следующих занятий, где словари используются для отслеживания
+    того, какие переменные определены в текущей области видимости. 
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="coqindex.html">Index</a><hr/>This page has been generated by <a href="http://rocq-prover.org/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>
