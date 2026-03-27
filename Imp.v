@@ -29,7 +29,7 @@ From Stdlib Require Import EqNat. Import Nat.
 From Stdlib Require Import Lia.
 From Stdlib Require Import List. Import ListNotations.
 From Stdlib Require Import Strings.String.
-From LF Require Import Maps.
+From Lectures Require Import Maps.
 
 (* ################################################################# *)
 (** * Арифметические и логические выражения *)

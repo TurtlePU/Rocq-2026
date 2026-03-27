@@ -1,6 +1,6 @@
 Set Warnings "-notation-overridden,-parsing".
 From Stdlib Require Export String.
-From LF Require Import Maps.
+From Lectures Require Import Maps.
 
 Parameter MISSING: Type.
 
@@ -27,7 +27,7 @@ Ltac print_manual_grade A :=
 
 End Check.
 
-From LF Require Import Maps.
+From Lectures Require Import Maps.
 Import Check.
 
 Goal True.
